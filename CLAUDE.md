@@ -4,9 +4,10 @@ A monorepo of small, self-contained Python tools.
 
 ## Repo shape
 
-Every root-level directory is **one independent tool**. Tools do not import each other — if
-two tools need the same code, duplicate it or promote it to its own tool with a clear API.
-The only shared things are the toolchain and the config in the root `pyproject.toml`.
+Every root-level directory is **one independent tool**, apart from `docs/` and the dotfile
+directories. Tools do not import each other — if two tools need the same code, duplicate it
+or promote it to its own tool with a clear API. The only shared things are the toolchain and
+the config in the root `pyproject.toml`.
 
 ```
 space/
@@ -15,6 +16,7 @@ space/
 ├── uv.lock               # committed — CI installs from it with `uv sync --locked`
 ├── .python-version       # 3.13 (used by uv and pyenv)
 ├── .github/workflows/    # CI
+├── docs/                 # design records, kept by date; not tied to any one tool
 └── <tool>/               # one directory per tool — an importable package
     ├── __init__.py       # makes the tool a package
     ├── __main__.py       # the CLI entry point, so `python -m <tool>` runs it
@@ -32,6 +34,10 @@ is imported as `starlight.catalog` and its own modules import each other relativ
 A tool's CLI lives in `__main__.py` and is invoked as `python -m <tool>`. Keep `__main__.py`
 importable: it uses relative imports, so it cannot be run as a loose script, and it should
 carry no shebang and no executable bit.
+
+`docs/` holds dated design records — specs and implementation plans, named for the day they
+were written. They describe a tool as it was designed, not as it is now, so read them as
+history and keep current documentation in the tool's `README.md`.
 
 ## Commands
 

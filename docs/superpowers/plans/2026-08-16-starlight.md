@@ -487,7 +487,7 @@ git commit -m "feat: add light travel time model"
 - Consumes: nothing.
 - Produces:
   - `class Star` — frozen dataclass with fields `name: str`, `designation: str | None`, `distance_pc: float`, `distance_pc_err: float | None`, `source: str`
-  - `class StarNotFound(Exception)` — attributes `name: str`, `suggestions: list[str]`
+  - `class StarNotFoundError(Exception)` — attributes `name: str`, `suggestions: list[str]`
   - `normalize(name: str) -> str`
   - `load_catalog(path: str | None = None) -> list[Star]`
   - `resolve(name: str, *, offline: bool = False) -> Star` — in this task the `offline` flag is accepted and the catalog is searched; Task 4 fills in the network branch.
@@ -562,7 +562,7 @@ Create `test_catalog.py`:
 ```python
 import pytest
 
-from catalog import Star, StarNotFound, load_catalog, normalize, resolve
+from catalog import Star, StarNotFoundError, load_catalog, normalize, resolve
 
 
 def test_normalize_collapses_case_spacing_and_punctuation():
@@ -609,13 +609,13 @@ def test_resolve_finds_a_star_by_designation_alias_or_catalogue_number():
 
 
 def test_resolve_raises_with_suggestions_for_a_near_miss():
-    with pytest.raises(StarNotFound) as excinfo:
+    with pytest.raises(StarNotFoundError) as excinfo:
         resolve("Betelgeus", offline=True)
     assert "Betelgeuse" in excinfo.value.suggestions
 
 
 def test_resolve_raises_without_suggestions_for_nonsense():
-    with pytest.raises(StarNotFound) as excinfo:
+    with pytest.raises(StarNotFoundError) as excinfo:
         resolve("zzzzzzzz", offline=True)
     assert excinfo.value.suggestions == []
     assert excinfo.value.name == "zzzzzzzz"
@@ -683,7 +683,7 @@ class Star:
     source: str
 
 
-class StarNotFound(Exception):
+class StarNotFoundError(Exception):
     """Raised when a name matches nothing, with near misses if there are any."""
 
     def __init__(self, name: str, suggestions: list[str]):
@@ -755,7 +755,7 @@ def resolve(name: str, *, offline: bool = False) -> Star:
     if star is not None:
         return star
 
-    raise StarNotFound(name, _suggestions(name, load_catalog()))
+    raise StarNotFoundError(name, _suggestions(name, load_catalog()))
 ```
 
 Note the `resolve` docstring already mentions SIMBAD; the network branch
@@ -782,10 +782,10 @@ git commit -m "feat: add bundled star catalog and name resolution"
 - Test: `test_simbad.py`
 
 **Interfaces:**
-- Consumes: `Star`, `StarNotFound`, `resolve` from Task 3.
+- Consumes: `Star`, `StarNotFoundError`, `resolve` from Task 3.
 - Produces:
   - `class SimbadError(Exception)`
-  - `simbad_lookup(name: str, *, timeout: float = 10.0) -> Star` — raises `SimbadError` on network trouble, `StarNotFound` when SIMBAD has no such object or no usable parallax
+  - `simbad_lookup(name: str, *, timeout: float = 10.0) -> Star` — raises `SimbadError` on network trouble, `StarNotFoundError` when SIMBAD has no such object or no usable parallax
   - `resolve(name, *, offline=False)` now calls `simbad_lookup` when the catalog misses and `offline` is false
 
 - [ ] **Step 1: Write the failing test**
@@ -800,7 +800,7 @@ import urllib.error
 import pytest
 
 import catalog
-from catalog import SimbadError, StarNotFound, simbad_lookup
+from catalog import SimbadError, StarNotFoundError, simbad_lookup
 
 
 # A real SIMBAD TAP response, trimmed to the columns we ask for.
@@ -849,13 +849,13 @@ def test_lookup_converts_parallax_to_distance(monkeypatch):
 
 def test_lookup_of_an_unknown_object_is_a_miss(monkeypatch):
     stub_fetch(monkeypatch, response=EMPTY_RESPONSE)
-    with pytest.raises(StarNotFound):
+    with pytest.raises(StarNotFoundError):
         simbad_lookup("zzzzzzzz")
 
 
 def test_lookup_without_a_usable_parallax_is_a_miss(monkeypatch):
     stub_fetch(monkeypatch, response=NULL_PARALLAX_RESPONSE)
-    with pytest.raises(StarNotFound):
+    with pytest.raises(StarNotFoundError):
         simbad_lookup("Betelgeuse")
 
 
@@ -890,7 +890,7 @@ def test_offline_never_calls_the_network(monkeypatch):
         raise AssertionError("the network must not be touched in offline mode")
 
     monkeypatch.setattr(catalog, "_http_post", explode)
-    with pytest.raises(StarNotFound):
+    with pytest.raises(StarNotFoundError):
         catalog.resolve("some obscure star", offline=True)
 
 
@@ -964,11 +964,11 @@ def simbad_lookup(name: str, *, timeout: float = SIMBAD_TIMEOUT) -> Star:
         raise SimbadError("SIMBAD returned a response that could not be read.") from exc
 
     if not rows:
-        raise StarNotFound(name, [])
+        raise StarNotFoundError(name, [])
 
     main_id, plx_value, plx_err = rows[0][0], rows[0][1], rows[0][2]
     if not plx_value or plx_value <= 0:
-        raise StarNotFound(name, [])
+        raise StarNotFoundError(name, [])
 
     distance_pc = 1000.0 / plx_value
     distance_err = (1000.0 * plx_err / plx_value**2) if plx_err else None
@@ -999,10 +999,10 @@ def resolve(name: str, *, offline: bool = False) -> Star:
     if not offline:
         return simbad_lookup(name)
 
-    raise StarNotFound(name, _suggestions(name, load_catalog()))
+    raise StarNotFoundError(name, _suggestions(name, load_catalog()))
 ```
 
-`simbad_lookup` raises `StarNotFound` itself on a miss, but with no
+`simbad_lookup` raises `StarNotFoundError` itself on a miss, but with no
 suggestions — so offline misses get the near-match hints and online misses
 report the authoritative answer. Fill in suggestions on the online miss too:
 
@@ -1010,10 +1010,10 @@ report the authoritative answer. Fill in suggestions on the online miss too:
     if not offline:
         try:
             return simbad_lookup(name)
-        except StarNotFound:
-            raise StarNotFound(name, _suggestions(name, load_catalog())) from None
+        except StarNotFoundError:
+            raise StarNotFoundError(name, _suggestions(name, load_catalog())) from None
 
-    raise StarNotFound(name, _suggestions(name, load_catalog()))
+    raise StarNotFoundError(name, _suggestions(name, load_catalog()))
 ```
 
 Use this second version.
@@ -1292,7 +1292,7 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         star = catalog.resolve(args.name, offline=args.offline)
-    except catalog.StarNotFound as exc:
+    except catalog.StarNotFoundError as exc:
         print(f"No star named {exc.name!r} was found.", file=sys.stderr)
         if exc.suggestions:
             print(f"Did you mean: {', '.join(exc.suggestions)}?", file=sys.stderr)
@@ -1504,6 +1504,6 @@ a task.
 concrete entries. Both are recorded at the top of this plan.
 
 **Type consistency:** `Star` fields are identical across Tasks 3, 4, and 5.
-`StarNotFound` carries `name` and `suggestions` everywhere it is raised or
+`StarNotFoundError` carries `name` and `suggestions` everywhere it is raised or
 caught. `emission_jdn(observation_jdn, distance_pc)` keeps the same signature
 in Tasks 2 and 5.

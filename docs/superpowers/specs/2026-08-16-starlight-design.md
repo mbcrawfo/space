@@ -114,7 +114,7 @@ Public interface:
 
 - `resolve(name, *, offline=False) -> Star` — returns a record with name,
   distance, uncertainty, and source.
-- Raises `StarNotFound` carrying near-miss suggestions.
+- Raises `StarNotFoundError` carrying near-miss suggestions.
 
 Resolution order:
 
@@ -122,7 +122,7 @@ Resolution order:
    Greek letter spellings to a canonical form (`α` / `alpha` / `a`).
 2. Match against name, designation, and alias keys.
 3. On a miss, if `offline` is false, query SIMBAD (below).
-4. On a further miss, raise `StarNotFound` with `difflib.get_close_matches`
+4. On a further miss, raise `StarNotFoundError` with `difflib.get_close_matches`
    suggestions drawn from the bundled names.
 
 ### SIMBAD fallback

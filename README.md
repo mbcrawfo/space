@@ -32,7 +32,8 @@ request. Run all three locally before committing — the formatter's output is n
 negotiable, so `ruff format .` should be the last thing you do.
 
 [`CLAUDE.md`](CLAUDE.md) is the full contributor guide: repo layout, the lint and
-formatting rules CI enforces, and how to add a new tool.
+formatting rules CI enforces, and how to add a new tool. [`docs/`](docs/) holds dated design
+records for the tools — history, not current documentation.
 
 ## License
 

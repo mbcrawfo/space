@@ -1,0 +1,9 @@
+[project]
+name = "starlight"
+version = "1.0.0"
+description = "Calculate when the light you see from a star left it"
+requires-python = ">=3.10"
+dependencies = []
+
+[tool.uv]
+package = false

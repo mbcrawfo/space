@@ -1,0 +1,42 @@
+[project]
+name = "space"
+version = "0.0.0"
+description = "A collection of small Python tools"
+requires-python = ">=3.10"
+dependencies = []
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["starlight"]
+
+[dependency-groups]
+dev = ["pytest>=8.0", "ruff>=0.16.3"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+# Each tool directory is a first-party import root, so ruff groups its modules correctly.
+src = ["starlight"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "N", "UP", "B", "A", "C4", "SIM", "RET", "ARG", "TID", "RUF"]
+ignore = [
+    "E501",   # line length is the formatter's job
+    "RUF001", # Greek letters in Bayer designations are intentional, not homoglyphs
+    "RUF002", # same, in docstrings
+    "N818",   # exception names are part of a tool's public API; don't force a rename
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["ARG"]
+"**/conftest.py" = ["ARG"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.pytest.ini_options]
+testpaths = ["starlight"]
+pythonpath = ["starlight"]
+addopts = "-ra --strict-markers"

@@ -56,9 +56,7 @@ def render(result: dict, *, uncertainty: bool, verbose: bool) -> str:
     if result["designation"] and result["designation"] != result["name"]:
         heading += f" ({result['designation']})"
 
-    distance = (
-        f"{result['distance_ly']:,.1f} ly  ({result['distance_pc']:,.1f} pc, {result['source']})"
-    )
+    distance = f"{result['distance_ly']:,.1f} ly  ({result['distance_pc']:,.1f} pc, {result['source']})"
 
     left = result["emission_date"]
     if uncertainty and "uncertainty" in result:
@@ -73,10 +71,7 @@ def render(result: dict, *, uncertainty: bool, verbose: bool) -> str:
     ]
 
     if verbose:
-        lines.append(
-            f"  Travel time  {result['travel_years']:,.1f} years "
-            f"({result['travel_days']:,.0f} days)"
-        )
+        lines.append(f"  Travel time  {result['travel_years']:,.1f} years ({result['travel_days']:,.0f} days)")
         lines.append("")
         lines.append(f"  {CAVEAT}")
 
@@ -100,15 +95,9 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="show the range implied by the distance error bars",
     )
-    parser.add_argument(
-        "--json", action="store_true", dest="as_json", help="emit machine-readable JSON"
-    )
-    parser.add_argument(
-        "--verbose", action="store_true", help="show travel time, source, and modelling caveats"
-    )
-    parser.add_argument(
-        "--offline", action="store_true", help="never query SIMBAD; use the bundled catalog only"
-    )
+    parser.add_argument("--json", action="store_true", dest="as_json", help="emit machine-readable JSON")
+    parser.add_argument("--verbose", action="store_true", help="show travel time, source, and modelling caveats")
+    parser.add_argument("--offline", action="store_true", help="never query SIMBAD; use the bundled catalog only")
     return parser
 
 
@@ -154,9 +143,7 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(_normalize_argv(raw_argv))
 
     try:
-        observation_jdn = (
-            caldate.today_jdn() if args.date is None else caldate.parse_date(args.date)
-        )
+        observation_jdn = caldate.today_jdn() if args.date is None else caldate.parse_date(args.date)
     except caldate.DateError as exc:
         print(exc, file=sys.stderr)
         return 2

@@ -74,9 +74,7 @@ def test_json_flag_emits_machine_readable_output(capsys):
 
 
 def test_json_with_uncertainty_includes_the_range(capsys):
-    code, out, _ = run(
-        capsys, "Betelgeuse", "--on", "2026-08-16", "--offline", "--uncertainty", "--json"
-    )
+    code, out, _ = run(capsys, "Betelgeuse", "--on", "2026-08-16", "--offline", "--uncertainty", "--json")
     assert code == 0
     result = json.loads(out)
     assert result["uncertainty"]["earliest_year"].endswith("BCE") is False

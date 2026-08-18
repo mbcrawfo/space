@@ -15,7 +15,7 @@ members = ["starlight"]
 dev = ["pytest>=8.0", "ruff>=0.16.3"]
 
 [tool.ruff]
-line-length = 100
+line-length = 120
 target-version = "py310"
 # Each tool directory is a first-party import root, so ruff groups its modules correctly.
 src = ["starlight"]

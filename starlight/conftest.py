@@ -15,9 +15,7 @@ import catalog
 
 
 def _explode(*args, **kwargs):
-    raise AssertionError(
-        "a test tried to reach the network via catalog._http_post; stub it with monkeypatch instead"
-    )
+    raise AssertionError("a test tried to reach the network via catalog._http_post; stub it with monkeypatch instead")
 
 
 @pytest.fixture(scope="session", autouse=True)

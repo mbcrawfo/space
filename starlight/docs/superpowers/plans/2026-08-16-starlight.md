@@ -715,11 +715,7 @@ def load_catalog(path: str | None = None) -> list[Star]:
             name=entry["name"],
             designation=entry.get("designation"),
             distance_pc=float(entry["distance_pc"]),
-            distance_pc_err=(
-                float(entry["distance_pc_err"])
-                if entry.get("distance_pc_err") is not None
-                else None
-            ),
+            distance_pc_err=(float(entry["distance_pc_err"]) if entry.get("distance_pc_err") is not None else None),
             source=entry["source"],
         )
         for entry in raw
@@ -1129,9 +1125,7 @@ def test_json_flag_emits_machine_readable_output(capsys):
 
 
 def test_json_with_uncertainty_includes_the_range(capsys):
-    code, out, _ = run(
-        capsys, "Betelgeuse", "--on", "2026-08-16", "--offline", "--uncertainty", "--json"
-    )
+    code, out, _ = run(capsys, "Betelgeuse", "--on", "2026-08-16", "--offline", "--uncertainty", "--json")
     assert code == 0
     result = json.loads(out)
     assert result["uncertainty"]["earliest_year"].endswith("BCE") is False
@@ -1242,9 +1236,7 @@ def render(result: dict, *, uncertainty: bool, verbose: bool) -> str:
     if result["designation"] and result["designation"] != result["name"]:
         heading += f" ({result['designation']})"
 
-    distance = (
-        f"{result['distance_ly']:,.1f} ly  ({result['distance_pc']:,.4g} pc, {result['source']})"
-    )
+    distance = f"{result['distance_ly']:,.1f} ly  ({result['distance_pc']:,.4g} pc, {result['source']})"
 
     left = result["emission_date"]
     if uncertainty and "uncertainty" in result:
@@ -1259,10 +1251,7 @@ def render(result: dict, *, uncertainty: bool, verbose: bool) -> str:
     ]
 
     if verbose:
-        lines.append(
-            f"  Travel time  {result['travel_years']:,.1f} years "
-            f"({result['travel_days']:,.0f} days)"
-        )
+        lines.append(f"  Travel time  {result['travel_years']:,.1f} years ({result['travel_days']:,.0f} days)")
         lines.append("")
         lines.append(f"  {CAVEAT}")
 
@@ -1286,15 +1275,9 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="show the range implied by the distance error bars",
     )
-    parser.add_argument(
-        "--json", action="store_true", dest="as_json", help="emit machine-readable JSON"
-    )
-    parser.add_argument(
-        "--verbose", action="store_true", help="show travel time, source, and modelling caveats"
-    )
-    parser.add_argument(
-        "--offline", action="store_true", help="never query SIMBAD; use the bundled catalog only"
-    )
+    parser.add_argument("--json", action="store_true", dest="as_json", help="emit machine-readable JSON")
+    parser.add_argument("--verbose", action="store_true", help="show travel time, source, and modelling caveats")
+    parser.add_argument("--offline", action="store_true", help="never query SIMBAD; use the bundled catalog only")
     return parser
 
 

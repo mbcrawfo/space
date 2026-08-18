@@ -11,6 +11,7 @@ The only shared things are the toolchain and the config in the root `pyproject.t
 ```
 space/
 ├── pyproject.toml        # uv workspace root; ruff + pytest config; dev dependencies
+├── .editorconfig         # editor-side mirror of the ruff style settings
 ├── uv.lock               # committed — CI installs from it with `uv sync --locked`
 ├── .python-version       # 3.13 (used by uv and pyenv)
 ├── .github/workflows/    # CI
@@ -45,7 +46,10 @@ CI fails on any violation of the following, so run `uv run ruff check .` and
 `uv run ruff format .` before committing.
 
 - **Ruff is the only linter and formatter.** Do not add black, flake8, isort, or pylint.
-- **Line length 100**, double quotes, ruff's default formatter style otherwise.
+- `.editorconfig` mirrors these settings for editors. It is a convenience, not a second
+  source of truth — `pyproject.toml` is authoritative, and the two must agree. Changing
+  the line length or quote style means changing both.
+- **Line length 120**, double quotes, ruff's default formatter style otherwise.
 - `ruff format` must leave the tree unchanged, and `ruff check` must report no errors.
 - **All configuration lives in the root `pyproject.toml`.** Never add a `[tool.ruff]`
   section to a tool's `pyproject.toml` — one rule set applies repo-wide.

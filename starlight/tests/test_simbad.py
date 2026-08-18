@@ -134,9 +134,7 @@ def test_url_error_reports_could_not_reach(monkeypatch):
 
 
 def test_http_error_reports_status_and_body(monkeypatch):
-    error = urllib.error.HTTPError(
-        "url", 400, "Bad Request", {}, io.BytesIO(b"Bad column name: xyz")
-    )
+    error = urllib.error.HTTPError("url", 400, "Bad Request", {}, io.BytesIO(b"Bad column name: xyz"))
     stub_fetch(monkeypatch, error=error)
     with pytest.raises(SimbadError) as excinfo:
         simbad_lookup("Betelgeuse")

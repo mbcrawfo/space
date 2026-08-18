@@ -168,11 +168,7 @@ def load_catalog(path: str | None = None) -> list[Star]:
             name=entry["name"],
             designation=entry.get("designation"),
             distance_pc=float(entry["distance_pc"]),
-            distance_pc_err=(
-                float(entry["distance_pc_err"])
-                if entry.get("distance_pc_err") is not None
-                else None
-            ),
+            distance_pc_err=(float(entry["distance_pc_err"]) if entry.get("distance_pc_err") is not None else None),
             source=entry["source"],
         )
         for entry in raw

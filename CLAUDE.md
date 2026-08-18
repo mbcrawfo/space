@@ -85,7 +85,10 @@ CI fails on any violation of the following, so run `uv run ruff check .` and
 
 - pytest, configured in the root `pyproject.toml`. Tests live in `<tool>/tests/`.
 - Tool-wide fixtures go in `<tool>/conftest.py` (at the tool root, not inside `tests/`).
-- `tests/` directories must **not** contain `__init__.py`.
+- `tests/` directories must **not** contain `__init__.py`. Two tools may duplicate a
+  module (see "Repo shape") and so may end up with same-named test files, e.g. both
+  `starlight/tests/test_catalog.py` and `spacetime/tests/test_catalog.py`; pytest's
+  root `addopts` sets `--import-mode=importlib` so those don't collide at collection.
 - Tests must not touch the network. Stub the network seam and, where practical, add an
   autouse fixture that makes real calls fail loudly — see `starlight/conftest.py`.
 

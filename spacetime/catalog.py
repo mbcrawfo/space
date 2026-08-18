@@ -4,8 +4,10 @@ Names arrive from humans in every possible spelling: `Betelgeuse`, `alpha ori`,
 `α Orionis`, `HD 39801`. Everything is compared in a normalized form —
 casefolded, Greek letters spelled out, punctuation and spacing dropped.
 
-``spacetime`` carries a copy of this module and ``stars.json``, so a correction here has
-to be copied across by hand.
+This module and ``stars.json`` are copies of ``starlight``'s. Tools in this
+repo do not import each other, so shared code is duplicated rather than
+factored out. The cost is real: a distance corrected here is not corrected
+there.
 """
 
 import difflib

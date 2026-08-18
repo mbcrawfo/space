@@ -5,6 +5,7 @@ requires-python = ">=3.10"
 [manifest]
 members = [
     "space",
+    "spacetime",
     "starlight",
 ]
 
@@ -126,6 +127,11 @@ dev = [
     { name = "pytest", specifier = ">=8.0" },
     { name = "ruff", specifier = ">=0.16.3" },
 ]
+
+[[package]]
+name = "spacetime"
+version = "0.1.0"
+source = { virtual = "spacetime" }
 
 [[package]]
 name = "starlight"

@@ -43,6 +43,10 @@ Fifty stars ship in `stars.json`. Anything else is looked up in SIMBAD, which
 resolves common names, Bayer designations, and catalogue numbers itself;
 `--offline` disables that fallback.
 
+`spacetime`, another tool in this repo, carries a copy of `catalog.py` and `stars.json`.
+Tools here do not import each other, so a distance corrected here has to be copied across
+to `spacetime` by hand.
+
 ## Exit codes
 
 | Code | Meaning                                  |

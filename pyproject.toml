@@ -12,7 +12,7 @@ package = false
 required-version = "==0.12.5"
 
 [tool.uv.workspace]
-members = ["starlight"]
+members = ["spacetime", "starlight"]
 
 [dependency-groups]
 dev = ["pytest>=8.0", "ruff>=0.16.3"]
@@ -41,4 +41,9 @@ quote-style = "double"
 [tool.pytest.ini_options]
 # The repo root on sys.path is what lets tests import a tool as `starlight.catalog`.
 pythonpath = ["."]
-addopts = "-ra --strict-markers"
+# Two tools may deliberately carry same-named test modules (e.g. two tools both
+# testing a duplicated catalog.py), and tests/ directories have no __init__.py.
+# Without a package marker, pytest's default import mode collides on the name;
+# importlib mode keys each test module by its file path instead, so it can tell
+# same-named modules in different tools apart.
+addopts = "-ra --strict-markers --import-mode=importlib"

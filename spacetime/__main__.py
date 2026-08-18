@@ -8,6 +8,7 @@ that pass at home while they do.
 import argparse
 import json
 import sys
+from typing import NoReturn
 
 from . import catalog, relativity
 
@@ -114,37 +115,120 @@ def render(result: dict, *, uncertainty: bool, verbose: bool) -> str:
     return "\n".join(lines)
 
 
+# RawDescriptionHelpFormatter prints these two blocks verbatim, so they are
+# hand-wrapped here rather than reflowed to the terminal width.
+DESCRIPTION = """\
+Work out how long a trip to another star takes, for the crew and for Earth.
+
+Flies the ship at a constant proper acceleration — Earth-normal gravity on deck
+at 1 G — and reports the peak speed it reaches, the years the crew ages, and the
+years that pass at home meanwhile. The gap between the last two is time dilation:
+at 1 G to Betelgeuse the crew ages 12 years while Earth ages 550."""
+
+EXAMPLES = """\
+Examples:
+  python -m spacetime Sirius                    the default 1 G flip-and-burn
+  python -m spacetime Sirius -a 3 --verbose     3 G, with the Lorentz factor
+  python -m spacetime "alpha ori" --flyby       no turnover — pass at full speed
+  python -m spacetime Proxima --json --offline  machine-readable, no network
+
+Exit codes:
+  0  success
+  1  unknown star — no catalog or SIMBAD match for NAME
+  2  invalid acceleration, or a command line argparse rejected
+  3  network failure while falling back to SIMBAD
+"""
+
+
+class _HelpOnErrorParser(argparse.ArgumentParser):
+    """An ArgumentParser that answers a bad command line with the full help.
+
+    argparse's own error() prints the usage line alone, which names the flags
+    but says nothing about what any of them accepts — which is exactly what a
+    user who just got the command line wrong is missing. The help goes to
+    stderr, not stdout, because this is still an error; the error message is
+    printed after it so it stays the last thing on a scrolled terminal.
+    """
+
+    def error(self, message: str) -> NoReturn:
+        self.print_help(sys.stderr)
+        self.exit(2, f"\n{self.prog}: error: {message}\n")
+
+
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
+    parser = _HelpOnErrorParser(
         prog="python -m spacetime",
-        description="Work out how long a trip to another star takes, for the crew and for Earth.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=DESCRIPTION,
+        epilog=EXAMPLES,
     )
-    parser.add_argument("name", help="star or system name, designation, or catalogue number")
+    parser.add_argument(
+        "name",
+        help=(
+            "the destination star: a common name, Bayer designation, or catalogue number. "
+            "Matching is forgiving about spelling and Greek letters, so Betelgeuse, "
+            "'alpha ori', 'α Orionis', and 'HD 39801' all resolve to the same star. "
+            "Fifty stars ship with the tool; anything else is resolved through SIMBAD "
+            "unless --offline is given. Quote names containing spaces."
+        ),
+    )
     parser.add_argument(
         "-a",
         "--accel",
         type=float,
         default=1.0,
         metavar="G",
-        help="proper acceleration in G, held constant for the whole burn (default: 1.0)",
+        help=(
+            "proper acceleration — what a scale on deck reads — in multiples of Earth "
+            "gravity, held constant for the whole burn. Must be a positive, finite number; "
+            "1.0 is comfortable, 3.0 is punishing, and higher only shortens crew time so far, "
+            "because the trip cannot beat the light-crossing time Earth sees. (default: 1.0)"
+        ),
     )
     parser.add_argument(
         "--flyby",
         action="store_true",
-        help="burn the whole way and pass the star, instead of flipping at the midpoint",
+        help=(
+            "burn the whole way and pass the star at peak speed, instead of the default "
+            "flip-and-burn, which flips at the midpoint and arrives at rest. A flyby is "
+            "faster and reaches a higher speed, but nothing aboard stops to look."
+        ),
     )
     parser.add_argument(
         "--uncertainty",
         action="store_true",
-        help="show the range implied by the distance error bars",
+        help=(
+            "add the span of speeds and times implied by the catalogued distance error bars. "
+            "Silently does nothing for a star whose distance carries no error bar."
+        ),
     )
-    parser.add_argument("--json", action="store_true", dest="as_json", help="emit machine-readable JSON")
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        dest="as_json",
+        help=(
+            "print the result as a JSON object under stable keys instead of the human-readable "
+            "report, for piping into other tools. Carries the uncertainty ranges only when "
+            "--uncertainty is also given."
+        ),
+    )
     parser.add_argument(
         "--verbose",
         action="store_true",
-        help="show the peak Lorentz factor, the years skipped, and the modelling caveats",
+        help=(
+            "add the peak Lorentz factor, the years of home time the crew skips, and the "
+            "caveats behind the numbers. Ignored under --json, whose output is the same "
+            "either way."
+        ),
     )
-    parser.add_argument("--offline", action="store_true", help="never query SIMBAD; use the bundled catalog only")
+    parser.add_argument(
+        "--offline",
+        action="store_true",
+        help=(
+            "never query SIMBAD: resolve NAME against the fifty bundled stars only. "
+            "Makes an unknown star exit 1 immediately rather than costing a network round trip."
+        ),
+    )
     return parser
 
 
@@ -156,6 +240,9 @@ def main(argv: list[str] | None = None) -> int:
         relativity.validate_acceleration(args.accel)
     except relativity.TripError as exc:
         print(exc, file=sys.stderr)
+        # The TripError says what is wrong with this value; the reader still
+        # needs to know what --accel would accept before they can fix it.
+        print("Try --accel 1 for Earth-normal gravity on deck.", file=sys.stderr)
         return 2
 
     try:

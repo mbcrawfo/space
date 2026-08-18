@@ -49,11 +49,11 @@ to `spacetime` by hand.
 
 ## Exit codes
 
-| Code | Meaning                                  |
-| ---- | ----------------------------------------- |
-| 0    | Success                                   |
-| 1    | Unknown star                              |
-| 2    | Malformed date                            |
+| Code | Meaning                                    |
+| ---- | ------------------------------------------ |
+| 0    | Success                                    |
+| 1    | Unknown star                               |
+| 2    | Malformed date, or a rejected command line |
 | 3    | Network failure during the SIMBAD fallback |
 
 ## What the model ignores

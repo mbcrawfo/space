@@ -168,3 +168,88 @@ def test_offline_never_reaches_for_the_network(capsys):
 )
 def test_format_speed_widens_until_it_is_honest(fraction, expected):
     assert spacetime.format_speed(fraction) == expected
+
+
+def help_text():
+    return spacetime.build_parser().format_help()
+
+
+def test_usage_names_the_module_form():
+    assert "python -m spacetime" in help_text()
+
+
+def test_help_documents_what_name_accepts():
+    text = help_text()
+    assert "HD 39801" in text  # a catalogue number
+    assert "SIMBAD" in text  # where an uncatalogued name is resolved
+
+
+def test_help_explains_that_acceleration_is_proper_acceleration():
+    text = help_text()
+    assert "proper acceleration" in text
+    assert "default: 1.0" in text
+
+
+def test_help_carries_worked_examples():
+    text = help_text()
+    assert "Examples:" in text
+    assert "python -m spacetime Sirius" in text
+
+
+def test_help_lists_every_exit_code():
+    text = help_text()
+    assert "Exit codes:" in text
+    for code, meaning in [("0", "success"), ("1", "unknown star"), ("2", "acceleration"), ("3", "network")]:
+        line = [ln for ln in text.splitlines() if ln.strip().startswith(code + " ")]
+        assert line, f"no exit-code line for {code}"
+        assert meaning in line[0].lower()
+
+
+def test_a_bad_acceleration_points_at_what_would_work(capsys):
+    code, _out, err = run("Sirius", "--accel", "0", "--offline", capsys=capsys)
+    assert code == 2
+    assert "positive" in err
+    assert "--accel" in err
+
+
+def argparse_error(capsys, *args):
+    """Run the CLI expecting argparse to reject argv, and hand back stderr."""
+    with pytest.raises(SystemExit) as exc_info:
+        spacetime.main(list(args))
+    captured = capsys.readouterr()
+    assert exc_info.value.code == 2
+    assert captured.out == ""  # errors belong on stderr, help included
+    return captured.err
+
+
+def test_a_missing_name_prints_the_whole_help(capsys):
+    err = argparse_error(capsys)
+    assert "the following arguments are required: name" in err
+    assert "Examples:" in err
+    assert "Exit codes:" in err
+    assert "--flyby" in err
+
+
+def test_an_unparseable_acceleration_prints_the_whole_help(capsys):
+    err = argparse_error(capsys, "Sirius", "--accel", "abc")
+    assert "invalid float value: 'abc'" in err
+    assert "Examples:" in err
+
+
+def test_an_unrecognized_flag_prints_the_whole_help(capsys):
+    err = argparse_error(capsys, "Sirius", "--nope")
+    assert "unrecognized arguments: --nope" in err
+    assert "Examples:" in err
+
+
+def test_the_usage_line_is_not_printed_twice(capsys):
+    assert argparse_error(capsys).count("usage: python -m spacetime") == 1
+
+
+def test_an_out_of_range_acceleration_stays_concise(capsys):
+    # A number argparse accepts but the model cannot use: the hint line is more
+    # use than forty lines of help, so this path must not dump them.
+    code, _out, err = run("Sirius", "--accel", "0", "--offline", capsys=capsys)
+    assert code == 2
+    assert "Try --accel 1" in err
+    assert "Examples:" not in err

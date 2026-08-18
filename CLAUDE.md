@@ -92,6 +92,71 @@ CI fails on any violation of the following, so run `uv run ruff check .` and
 - Tests must not touch the network. Stub the network seam and, where practical, add an
   autouse fixture that makes real calls fail loudly — see `starlight/conftest.py`.
 
+## CLI help and error output
+
+Every tool with a CLI documents itself through `--help`. This is a requirement, not a
+nicety: `python -m <tool> --help` is the only documentation a user has in front of them at
+the moment they need it, so it must be complete enough to use the tool without opening the
+README. Build the parser in a `build_parser()` function that takes no arguments and returns
+the `ArgumentParser`, so tests can render the help text without running the CLI.
+
+Every parser carries all of:
+
+- **`prog="python -m <tool>"`.** That is how the tool is actually invoked — `__main__.py`
+  uses relative imports and has no shebang, so a bare filename in the usage line names
+  something that cannot be run. `prog` also prefixes argparse's own error messages.
+- **A `description` that says what the tool computes**, not just what it is about — a
+  headline sentence, then a short paragraph on the method and what the numbers mean.
+- **An `epilog` holding worked examples and a table of exit codes.** Examples use real
+  star names or inputs that actually resolve, and their comment column is aligned. The
+  exit codes must match the README's table and the codes the tool really returns —
+  remember that argparse exits 2 of its own accord, so whatever a tool uses 2 for has to
+  cover that too.
+- **A `help=` on every argument stating what it accepts and what it changes in the
+  output** — the accepted format and its edge cases, the default, and any case where the
+  flag silently does nothing. "show the range" is not enough; name the range and say when
+  it is absent.
+
+`description` and `epilog` are printed verbatim under `RawDescriptionHelpFormatter`, so
+hand-wrap them to about 88 columns. Per-argument `help=` strings are still reflowed by
+argparse — write them as one string and let it wrap.
+
+A command line argparse itself rejects — a missing required argument, a value of the
+wrong type, an unrecognized flag — must print the **whole help**, not the usage line
+alone. Usage names the flags but says nothing about what any of them accepts, which is
+precisely what a user who just got the command line wrong is missing. Subclass
+`ArgumentParser` and override `error()`:
+
+```python
+class _HelpOnErrorParser(argparse.ArgumentParser):
+    def error(self, message: str) -> NoReturn:
+        self.print_help(sys.stderr)
+        self.exit(2, f"\n{self.prog}: error: {message}\n")
+```
+
+The help goes to stderr, because this is still an error, and the message is printed after
+it so it stays the last thing on a scrolled terminal. Each tool carries its own copy of
+this class — tools do not import each other.
+
+Errors a tool raises about a *value* argparse already accepted — a date that does not
+exist, an acceleration of zero — stay concise instead. They print what was wrong **and**
+what would work, and nothing else; a screen of help would only bury the hint, which is
+the useful half:
+
+```
+Acceleration must be a positive, finite number of G, not 0.0.
+Try --accel 1 for Earth-normal gravity on deck.
+```
+
+Raise the "what was wrong" half from the module that knows (`caldate.DateError`,
+`relativity.TripError`, `catalog.StarNotFoundError`) and print the exception directly, so
+the sentence exists in exactly one place; add the "what would work" half in `__main__.py`,
+where the flag names live.
+
+Test the help text and the error hints like any other behavior — assert against
+`build_parser().format_help()` and against stderr. `starlight/tests/test_starlight.py` and
+`spacetime/tests/test_spacetime.py` are the worked examples.
+
 ## Adding a tool
 
 1. Create `<tool>/` with a `pyproject.toml`:
@@ -118,6 +183,9 @@ CI fails on any violation of the following, so run `uv run ruff check .` and
    if __name__ == "__main__":
        sys.exit(main())
    ```
+
+   A CLI's parser and error output must meet the standard in
+   [CLI help and error output](#cli-help-and-error-output).
 
 3. Register the directory in `[tool.uv.workspace] members` in the root `pyproject.toml`.
    That is the only place — `[tool.ruff] src` and `[tool.pytest.ini_options] pythonpath` are

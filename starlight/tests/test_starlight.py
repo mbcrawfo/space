@@ -203,3 +203,106 @@ def test_explicit_empty_on_value_is_a_malformed_date_not_todays_date(capsys):
     code, out, _err = run(capsys, "Sirius", "--on=", "--offline")
     assert code == 2
     assert out == ""
+
+
+def help_text():
+    return starlight.build_parser().format_help()
+
+
+def test_usage_names_the_module_form_not_a_loose_script():
+    # __main__.py uses relative imports and carries no shebang, so a
+    # "starlight.py" in the usage line points at something unrunnable.
+    text = help_text()
+    assert "python -m starlight" in text
+    assert "starlight.py" not in text
+
+
+def test_errors_name_the_module_form_too(capsys):
+    with pytest.raises(SystemExit):
+        starlight.main([])
+    assert "python -m starlight: error:" in capsys.readouterr().err
+
+
+def test_help_documents_what_name_accepts():
+    text = help_text()
+    assert "HD 39801" in text  # a catalogue number
+    assert "SIMBAD" in text  # where an uncatalogued name is resolved
+
+
+def test_help_documents_the_bce_date_form():
+    assert "-0044-03-15" in help_text()
+
+
+def test_help_carries_worked_examples():
+    text = help_text()
+    assert "Examples:" in text
+    assert "python -m starlight Betelgeuse --on 2026-08-16" in text
+
+
+def test_help_lists_every_exit_code():
+    text = help_text()
+    assert "Exit codes:" in text
+    for code, meaning in [("0", "success"), ("1", "unknown star"), ("2", "malformed date"), ("3", "network")]:
+        line = [ln for ln in text.splitlines() if ln.strip().startswith(code + " ")]
+        assert line, f"no exit-code line for {code}"
+        assert meaning in line[0].lower()
+
+
+def test_a_malformed_date_points_at_the_expected_form(capsys):
+    code, _out, err = run(capsys, "Sirius", "--on", "not-a-date", "--offline")
+    assert code == 2
+    assert "YYYY-MM-DD" in err
+
+
+def test_an_out_of_range_date_still_points_at_the_expected_form(capsys):
+    # The DateError itself says only "13 is not a month", so the hint line is
+    # what tells the reader the shape --on wants.
+    code, _out, err = run(capsys, "Sirius", "--on", "2026-13-01", "--offline")
+    assert code == 2
+    assert "13 is not a month" in err
+    assert "YYYY-MM-DD" in err
+
+
+def argparse_error(capsys, *args):
+    """Run the CLI expecting argparse to reject argv, and hand back stderr."""
+    with pytest.raises(SystemExit) as exc_info:
+        starlight.main(list(args))
+    captured = capsys.readouterr()
+    assert exc_info.value.code == 2
+    assert captured.out == ""  # errors belong on stderr, help included
+    return captured.err
+
+
+def test_a_missing_name_prints_the_whole_help(capsys):
+    err = argparse_error(capsys)
+    assert "the following arguments are required: name" in err
+    assert "Examples:" in err
+    assert "Exit codes:" in err
+    assert "--uncertainty" in err
+
+
+def test_a_flag_with_no_value_prints_the_whole_help(capsys):
+    err = argparse_error(capsys, "Sirius", "--on")
+    assert "expected one argument" in err
+    assert "Examples:" in err
+
+
+def test_an_unrecognized_flag_prints_the_whole_help(capsys):
+    err = argparse_error(capsys, "Sirius", "--nope")
+    assert "unrecognized arguments: --nope" in err
+    assert "Examples:" in err
+
+
+def test_the_usage_line_is_not_printed_twice(capsys):
+    # print_help() already opens with usage; argparse's own error() prints it
+    # separately, and the override must not leave both in place.
+    assert argparse_error(capsys).count("usage: python -m starlight") == 1
+
+
+def test_a_bad_date_stays_concise_rather_than_dumping_the_help(capsys):
+    # The hint line is more use here than forty lines of help, and burying it
+    # under them is the failure this guards against.
+    code, _out, err = run(capsys, "Sirius", "--on", "not-a-date", "--offline")
+    assert code == 2
+    assert "Expected --on YYYY-MM-DD" in err
+    assert "Examples:" not in err

@@ -8,6 +8,7 @@ import argparse
 import json
 import re
 import sys
+from typing import NoReturn
 
 from . import caldate, catalog, lighttime
 
@@ -75,26 +76,107 @@ def render(result: dict, *, uncertainty: bool, verbose: bool) -> str:
     return "\n".join(lines)
 
 
+# RawDescriptionHelpFormatter prints these two blocks verbatim, so they are
+# hand-wrapped here rather than reflowed to the terminal width.
+DESCRIPTION = """\
+Find out when the light you see tonight left its star.
+
+Subtracts the light travel time — the star's catalogued distance divided by c —
+from the date you observed it, and reports the date, in Earth's frame, when that
+light set out. Dates run on Julian Day Numbers over the proleptic Gregorian
+calendar, so emission dates deep in BCE are reported exactly like any other."""
+
+EXAMPLES = """\
+Examples:
+  python -m starlight Betelgeuse --on 2026-08-16   what left Betelgeuse that night
+  python -m starlight "alpha ori" --uncertainty    the same star, with its error bars
+  python -m starlight Sirius --on -0044-03-15      looking up on the Ides of March
+  python -m starlight "HD 39801" --json --offline  machine-readable, bundled catalog
+
+Exit codes:
+  0  success
+  1  unknown star — no catalog or SIMBAD match for NAME
+  2  malformed date, or a command line argparse rejected
+  3  network failure while falling back to SIMBAD
+"""
+
+
+class _HelpOnErrorParser(argparse.ArgumentParser):
+    """An ArgumentParser that answers a bad command line with the full help.
+
+    argparse's own error() prints the usage line alone, which names the flags
+    but says nothing about what any of them accepts — which is exactly what a
+    user who just got the command line wrong is missing. The help goes to
+    stderr, not stdout, because this is still an error; the error message is
+    printed after it so it stays the last thing on a scrolled terminal.
+    """
+
+    def error(self, message: str) -> NoReturn:
+        self.print_help(sys.stderr)
+        self.exit(2, f"\n{self.prog}: error: {message}\n")
+
+
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        prog="starlight.py",
-        description="Find out when the light you see tonight left its star.",
+    parser = _HelpOnErrorParser(
+        prog="python -m starlight",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=DESCRIPTION,
+        epilog=EXAMPLES,
     )
-    parser.add_argument("name", help="star or system name, designation, or catalogue number")
+    parser.add_argument(
+        "name",
+        help=(
+            "the star to look up: a common name, Bayer designation, or catalogue number. "
+            "Matching is forgiving about spelling and Greek letters, so Betelgeuse, "
+            "'alpha ori', 'α Orionis', and 'HD 39801' all resolve to the same star. "
+            "Fifty stars ship with the tool; anything else is resolved through SIMBAD "
+            "unless --offline is given. Quote names containing spaces."
+        ),
+    )
     parser.add_argument(
         "--on",
         dest="date",
         metavar="DATE",
-        help="date of observation, YYYY-MM-DD (leading minus for BCE). Defaults to today.",
+        help=(
+            "the date you observed the star, as YYYY-MM-DD. Prefix the year with a minus "
+            "for BCE (-0044-03-15 is the Ides of March); there is no year 0, so 1 BCE is "
+            "written -0001. Defaults to today."
+        ),
     )
     parser.add_argument(
         "--uncertainty",
         action="store_true",
-        help="show the range implied by the distance error bars",
+        help=(
+            "add the span of emission years implied by the catalogued distance error bars. "
+            "Silently does nothing for a star whose distance carries no error bar."
+        ),
     )
-    parser.add_argument("--json", action="store_true", dest="as_json", help="emit machine-readable JSON")
-    parser.add_argument("--verbose", action="store_true", help="show travel time, source, and modelling caveats")
-    parser.add_argument("--offline", action="store_true", help="never query SIMBAD; use the bundled catalog only")
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        dest="as_json",
+        help=(
+            "print the result as a JSON object under stable keys instead of the human-readable "
+            "report, for piping into other tools. Carries the uncertainty range only when "
+            "--uncertainty is also given."
+        ),
+    )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help=(
+            "add the light travel time in years and days, and the caveats behind the number. "
+            "Ignored under --json, whose output is the same either way."
+        ),
+    )
+    parser.add_argument(
+        "--offline",
+        action="store_true",
+        help=(
+            "never query SIMBAD: resolve NAME against the fifty bundled stars only. "
+            "Makes an unknown star exit 1 immediately rather than costing a network round trip."
+        ),
+    )
     return parser
 
 
@@ -143,6 +225,9 @@ def main(argv: list[str] | None = None) -> int:
         observation_jdn = caldate.today_jdn() if args.date is None else caldate.parse_date(args.date)
     except caldate.DateError as exc:
         print(exc, file=sys.stderr)
+        # The DateError says what is wrong with this date; the reader still
+        # needs the shape --on wants before they can fix it.
+        print("Expected --on YYYY-MM-DD, with a leading minus for BCE years.", file=sys.stderr)
         return 2
 
     try:

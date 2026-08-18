@@ -66,9 +66,9 @@ CI fails on any violation of the following, so run `uv run ruff check .` and
   `C4` (comprehensions), `SIM`, `RET`, `ARG` (unused arguments), `TID` (tidy imports),
   and `RUF`.
 - Deliberately ignored, with reasons recorded in `pyproject.toml`: `E501` (the formatter
-  owns line length), `RUF001`/`RUF002` (Greek letters in astronomical designations are
-  intentional, not homoglyph typos), and `N818` (exception names are part of a tool's
-  public API; the rule would force renames like `StarNotFound` → `StarNotFoundError`).
+  owns line length) and `RUF001`/`RUF002` (Greek letters in astronomical designations are
+  intentional, not homoglyph typos). That is the whole list — everything else is enforced,
+  including `N818`, so exception classes must end in `Error`.
 - **Suppress narrowly.** A `# noqa` must name the specific rule and say why:
   `# noqa: ARG001 - signature fixed by the callback protocol`. Bare `# noqa` is not
   acceptable. Prefer fixing the code over suppressing.
@@ -119,6 +119,19 @@ CI fails on any violation of the following, so run `uv run ruff check .` and
 
 Because each tool is its own package, two tools may both have a `config.py` or a `catalog.py`
 without shadowing each other.
+
+## Toolchain versions
+
+Everything the toolchain depends on is pinned, so a CI run is reproducible from the commit
+alone:
+
+- **uv** — `required-version` under `[tool.uv]` in the root `pyproject.toml`. `uv` refuses to
+  run if the installed version differs, and `astral-sh/setup-uv` reads the same field, so CI
+  and local use one version and the workflow needs no `version:` input of its own. Bumping it
+  means upgrading your local uv in the same commit.
+- **pytest and ruff** — floors in `[dependency-groups] dev`, exact versions in `uv.lock`. CI
+  installs from the lock with `uv sync --locked`; run `uv lock --upgrade` to move them.
+- **GitHub Actions** — pinned to commit SHAs; see [CI](#ci).
 
 ## Python versions
 

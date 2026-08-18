@@ -5,7 +5,7 @@ import urllib.error
 import pytest
 
 from starlight import catalog
-from starlight.catalog import SimbadError, StarNotFound, simbad_lookup
+from starlight.catalog import SimbadError, StarNotFoundError, simbad_lookup
 
 # Real responses recorded from the live SIMBAD TAP service on 2026-08-16,
 # built here from the recorded values for readability. The `metadata` block
@@ -105,13 +105,13 @@ def test_lookup_converts_parallax_to_distance(monkeypatch):
 
 def test_lookup_of_an_unknown_object_is_a_miss(monkeypatch):
     stub_fetch(monkeypatch, response=EMPTY_RESPONSE)
-    with pytest.raises(StarNotFound):
+    with pytest.raises(StarNotFoundError):
         simbad_lookup("zzzzzzzz")
 
 
 def test_lookup_without_a_usable_parallax_is_a_miss(monkeypatch):
     stub_fetch(monkeypatch, response=NULL_PARALLAX_RESPONSE)
-    with pytest.raises(StarNotFound):
+    with pytest.raises(StarNotFoundError):
         simbad_lookup("Eta Carinae")
 
 
@@ -177,7 +177,7 @@ def test_malformed_response_becomes_a_simbad_error(monkeypatch):
 
 def test_row_shorter_than_expected_becomes_a_star_not_found(monkeypatch):
     stub_fetch(monkeypatch, response=SHORT_ROW_RESPONSE)
-    with pytest.raises(StarNotFound):
+    with pytest.raises(StarNotFoundError):
         simbad_lookup("Betelgeuse")
 
 
@@ -203,13 +203,13 @@ def test_null_row_becomes_a_simbad_error(monkeypatch):
 
 def test_zero_parallax_is_a_miss(monkeypatch):
     stub_fetch(monkeypatch, response=ZERO_PARALLAX_RESPONSE)
-    with pytest.raises(StarNotFound):
+    with pytest.raises(StarNotFoundError):
         simbad_lookup("Betelgeuse")
 
 
 def test_negative_parallax_is_a_miss(monkeypatch):
     stub_fetch(monkeypatch, response=NEGATIVE_PARALLAX_RESPONSE)
-    with pytest.raises(StarNotFound):
+    with pytest.raises(StarNotFoundError):
         simbad_lookup("Betelgeuse")
 
 
@@ -231,7 +231,7 @@ def test_offline_never_calls_the_network(monkeypatch):
         raise AssertionError("the network must not be touched in offline mode")
 
     monkeypatch.setattr(catalog, "_http_post", explode)
-    with pytest.raises(StarNotFound):
+    with pytest.raises(StarNotFoundError):
         catalog.resolve("some obscure star", offline=True)
 
 

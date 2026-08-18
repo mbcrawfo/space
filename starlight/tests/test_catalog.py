@@ -1,7 +1,7 @@
 import pytest
 
 from starlight import catalog
-from starlight.catalog import StarNotFound, load_catalog, normalize, resolve
+from starlight.catalog import StarNotFoundError, load_catalog, normalize, resolve
 
 
 def test_normalize_collapses_case_spacing_and_punctuation():
@@ -48,13 +48,13 @@ def test_resolve_finds_a_star_by_designation_alias_or_catalogue_number():
 
 
 def test_resolve_raises_with_suggestions_for_a_near_miss():
-    with pytest.raises(StarNotFound) as excinfo:
+    with pytest.raises(StarNotFoundError) as excinfo:
         resolve("Betelgeus", offline=True)
     assert "Betelgeuse" in excinfo.value.suggestions
 
 
 def test_resolve_raises_without_suggestions_for_nonsense():
-    with pytest.raises(StarNotFound) as excinfo:
+    with pytest.raises(StarNotFoundError) as excinfo:
         resolve("zzzzzzzz", offline=True)
     assert excinfo.value.suggestions == []
     assert excinfo.value.name == "zzzzzzzz"

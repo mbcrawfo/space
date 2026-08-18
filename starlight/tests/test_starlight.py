@@ -94,7 +94,7 @@ def test_unknown_star_exits_1_with_suggestions(capsys):
     assert out == ""
     assert "Betelgeuse" in err
     assert "No star named 'Betelgeus' was found." in err
-    # main() must not rebuild this sentence separately from StarNotFound's
+    # main() must not rebuild this sentence separately from StarNotFoundError's
     # own message — printing exc directly means there is exactly one copy.
     assert err.count("No star named") == 1
 

@@ -7,6 +7,9 @@ dependencies = []
 
 [tool.uv]
 package = false
+# Pinned so local runs and CI use the same uv. astral-sh/setup-uv reads this, so the
+# workflow needs no separate version. Bumping it means bumping the installed uv too.
+required-version = "==0.12.5"
 
 [tool.uv.workspace]
 members = ["starlight"]
@@ -26,7 +29,6 @@ ignore = [
     "E501",   # line length is the formatter's job
     "RUF001", # Greek letters in Bayer designations are intentional, not homoglyphs
     "RUF002", # same, in docstrings
-    "N818",   # exception names are part of a tool's public API; don't force a rename
 ]
 
 [tool.ruff.lint.per-file-ignores]

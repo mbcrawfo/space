@@ -55,7 +55,7 @@ class Star:
     source: str
 
 
-class StarNotFound(Exception):
+class StarNotFoundError(Exception):
     """Raised when a name matches nothing, with near misses if there are any."""
 
     def __init__(self, name: str, suggestions: list[str]):
@@ -118,7 +118,7 @@ def simbad_lookup(name: str, *, timeout: float = SIMBAD_TIMEOUT) -> Star:
         raise SimbadError("SIMBAD returned a response that could not be read.") from exc
 
     if not rows:
-        raise StarNotFound(name, [])
+        raise StarNotFoundError(name, [])
 
     try:
         row = rows[0]
@@ -126,12 +126,12 @@ def simbad_lookup(name: str, *, timeout: float = SIMBAD_TIMEOUT) -> Star:
         plx_value = None if plx_value is None else float(plx_value)
         plx_err = None if plx_err is None else float(plx_err)
     except IndexError:
-        raise StarNotFound(name, []) from None
+        raise StarNotFoundError(name, []) from None
     except (ValueError, KeyError, TypeError) as exc:
         raise SimbadError("SIMBAD returned a response that could not be read.") from exc
 
     if not plx_value or plx_value <= 0:
-        raise StarNotFound(name, [])
+        raise StarNotFoundError(name, [])
 
     distance_pc = 1000.0 / plx_value
     distance_err = (1000.0 * plx_err / plx_value**2) if plx_err is not None else None
@@ -217,7 +217,7 @@ def resolve(name: str, *, offline: bool = False) -> Star:
     if not offline:
         try:
             return simbad_lookup(name)
-        except StarNotFound:
-            raise StarNotFound(name, _suggestions(name, load_catalog())) from None
+        except StarNotFoundError:
+            raise StarNotFoundError(name, _suggestions(name, load_catalog())) from None
 
-    raise StarNotFound(name, _suggestions(name, load_catalog()))
+    raise StarNotFoundError(name, _suggestions(name, load_catalog()))

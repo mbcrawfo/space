@@ -147,7 +147,7 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         star = catalog.resolve(args.name, offline=args.offline)
-    except catalog.StarNotFound as exc:
+    except catalog.StarNotFoundError as exc:
         print(exc, file=sys.stderr)
         if exc.suggestions:
             print(f"Did you mean: {', '.join(exc.suggestions)}?", file=sys.stderr)

@@ -1,7 +1,7 @@
 import pytest
 
-import catalog
-from catalog import StarNotFound, load_catalog, normalize, resolve
+from starlight import catalog
+from starlight.catalog import StarNotFound, load_catalog, normalize, resolve
 
 
 def test_normalize_collapses_case_spacing_and_punctuation():

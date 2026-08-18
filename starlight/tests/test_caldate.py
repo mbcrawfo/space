@@ -1,6 +1,6 @@
 import pytest
 
-from caldate import (
+from starlight.caldate import (
     DateError,
     format_date,
     format_year,

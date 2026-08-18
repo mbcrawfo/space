@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """When we look at a star, we see light that left it years ago.
 
 Given a star and a date of observation, report the date — in Earth's frame of
@@ -10,9 +9,7 @@ import json
 import re
 import sys
 
-import caldate
-import catalog
-import lighttime
+from . import caldate, catalog, lighttime
 
 CAVEAT = (
     "Light travel time uses the star's present catalogued distance. It ignores "

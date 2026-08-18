@@ -16,7 +16,7 @@ The repo is a [uv](https://docs.astral.sh/uv/) workspace with a single shared vi
 ```bash
 uv sync                                       # create the venv from uv.lock
 uv run pytest                                 # run every tool's tests
-uv run python starlight/starlight.py Sirius   # run a tool
+uv run python -m starlight Sirius             # run a tool
 ```
 
 ## Development

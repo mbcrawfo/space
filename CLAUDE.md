@@ -15,15 +15,23 @@ space/
 ├── uv.lock               # committed — CI installs from it with `uv sync --locked`
 ├── .python-version       # 3.13 (used by uv and pyenv)
 ├── .github/workflows/    # CI
-└── <tool>/               # one directory per tool
+└── <tool>/               # one directory per tool — an importable package
+    ├── __init__.py       # makes the tool a package
+    ├── __main__.py       # the CLI entry point, so `python -m <tool>` runs it
     ├── pyproject.toml    # workspace member metadata
     ├── conftest.py       # tool-wide pytest fixtures (optional)
-    ├── *.py              # flat modules
+    ├── *.py              # the tool's modules, flat inside the package
     └── tests/            # test_*.py
 ```
 
-Tools use a **flat module layout**: modules live directly in the tool directory and import
-each other by bare name (`import catalog`). There is no `src/` and no package directory.
+Each tool is a **package directory at the repo root**, with its modules flat inside it —
+there is no `src/` and no nested package. The repo root is the only import root, so a tool
+is imported as `starlight.catalog` and its own modules import each other relatively
+(`from . import caldate`).
+
+A tool's CLI lives in `__main__.py` and is invoked as `python -m <tool>`. Keep `__main__.py`
+importable: it uses relative imports, so it cannot be run as a loose script, and it should
+carry no shebang and no executable bit.
 
 ## Commands
 
@@ -37,7 +45,7 @@ uv run ruff check .              # lint
 uv run ruff check --fix .        # lint, applying safe fixes
 uv run ruff format .             # format
 uv run ruff format --check .     # verify formatting without writing (what CI runs)
-uv run python starlight/starlight.py Sirius   # run a tool
+uv run python -m starlight Sirius             # run a tool
 ```
 
 ## Lint and formatting requirements
@@ -92,22 +100,25 @@ CI fails on any violation of the following, so run `uv run ruff check .` and
    ```
 
    `package = false` marks it as a virtual workspace member: uv installs its dependencies
-   into the shared venv but does not try to build it as a distribution, which a flat module
-   layout could not support anyway.
+   into the shared venv but does not try to build it as a distribution. Tools are run with
+   `python -m <tool>`, not installed.
 
-2. Register it in the root `pyproject.toml`, in **three** places:
-   - `[tool.uv.workspace] members`
-   - `[tool.ruff] src` — so ruff sorts the tool's own modules as first-party imports
-   - `[tool.pytest.ini_options] testpaths` and `pythonpath` — `pythonpath` is what puts the
-     tool directory on `sys.path` so `tests/` can `import <module>` by bare name
+2. Add `__init__.py` and, for anything with a CLI, `__main__.py` ending in:
 
-3. Run `uv sync` to refresh `uv.lock`, then `uv run ruff check . && uv run ruff format . && uv run pytest`.
+   ```python
+   if __name__ == "__main__":
+       sys.exit(main())
+   ```
 
-### Name your modules distinctively
+3. Register the directory in `[tool.uv.workspace] members` in the root `pyproject.toml`.
+   That is the only place — `[tool.ruff] src` and `[tool.pytest.ini_options] pythonpath` are
+   both `["."]` and cover every tool, and pytest collects tests from the whole repo, so a
+   new tool's tests cannot be silently skipped.
 
-Because every tool directory goes on `sys.path`, two tools with a module of the same name
-(`config.py`, `catalog.py`, `utils.py`) will shadow each other during a repo-wide pytest run.
-Prefix or specialize module names when there is any chance of collision.
+4. Run `uv sync` to refresh `uv.lock`, then `uv run ruff check . && uv run ruff format . && uv run pytest`.
+
+Because each tool is its own package, two tools may both have a `config.py` or a `catalog.py`
+without shadowing each other.
 
 ## Python versions
 

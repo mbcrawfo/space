@@ -1,6 +1,6 @@
 import pytest
 
-from lighttime import (
+from starlight.lighttime import (
     DAYS_PER_JULIAN_YEAR,
     LY_PER_PC,
     emission_jdn,

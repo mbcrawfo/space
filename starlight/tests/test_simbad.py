@@ -4,8 +4,8 @@ import urllib.error
 
 import pytest
 
-import catalog
-from catalog import SimbadError, StarNotFound, simbad_lookup
+from starlight import catalog
+from starlight.catalog import SimbadError, StarNotFound, simbad_lookup
 
 # Real responses recorded from the live SIMBAD TAP service on 2026-08-16,
 # built here from the recorded values for readability. The `metadata` block

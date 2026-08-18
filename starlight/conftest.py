@@ -11,7 +11,7 @@ supply a canned response or a simulated failure.
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
 
-import catalog
+from starlight import catalog
 
 
 def _explode(*args, **kwargs):

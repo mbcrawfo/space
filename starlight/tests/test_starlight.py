@@ -2,8 +2,8 @@ import json
 
 import pytest
 
-import catalog
-import starlight
+from starlight import __main__ as starlight
+from starlight import catalog
 
 
 @pytest.fixture(autouse=True)

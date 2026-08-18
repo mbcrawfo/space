@@ -1,11 +1,11 @@
 # starlight
 
-When you look at a star, you are looking into the past. `starlight.py` tells you
+When you look at a star, you are looking into the past. `starlight` tells you
 how far into the past: give it a star and a date, and it reports when the light
 you saw began its journey.
 
 ```
-$ ./starlight.py Betelgeuse --on 2026-08-16
+$ python -m starlight Betelgeuse --on 2026-08-16
 Betelgeuse (Alpha Orionis)
   Distance     548.3 ly  (168.1 pc, Hipparcos (revised))
   Observed     16 August 2026 CE
@@ -15,7 +15,7 @@ Betelgeuse (Alpha Orionis)
 ## Usage
 
 ```
-starlight.py NAME [--on DATE] [--uncertainty] [--json] [--verbose] [--offline]
+python -m starlight NAME [--on DATE] [--uncertainty] [--json] [--verbose] [--offline]
 ```
 
 - `NAME` — a common name, Bayer designation, or catalogue number. Spelling is
@@ -60,19 +60,17 @@ it ignores proper motion; and it ignores gravitational and cosmological
 effects. For every star here, those corrections are far smaller than the
 uncertainty on the published distance — which `--uncertainty` will show you.
 
-## Requirements
-
-Python 3.10 or newer. No third-party runtime dependencies.
-
 ## Running it
 
 `starlight` is a tool in the [space](../) monorepo, which uses `uv`. From the repo root:
 
 ```
-uv run python starlight/starlight.py Betelgeuse --on 2026-08-16
+uv run python -m starlight Betelgeuse --on 2026-08-16
 ```
 
-Or from this directory, `./starlight.py Betelgeuse --on 2026-08-16` with any Python 3.10+.
+It is a package, not a loose script, so run it with `-m` from the repo root — the directory
+above this one has to be on `sys.path`. It needs Python 3.10 or newer and has no
+third-party runtime dependencies.
 
 ## Tests
 

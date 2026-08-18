@@ -71,7 +71,7 @@ Betelgeuse (Alpha Orionis)
   Skipped      537.9 years
 
   Fuel is ignored entirely: a perfect photon rocket flying the Proxima flip-and-burn
-  needs a mass ratio near 1600, and nothing less ideal does better. Earth and the star
+  needs a mass ratio near 40, and nothing less ideal does better. Earth and the star
   are assumed mutually at rest at the star's present catalogued distance, so the star's
   own motion over the trip is not modelled, and the flip is instantaneous.
 ```
@@ -88,8 +88,8 @@ Betelgeuse (Alpha Orionis)
 ## What the model ignores
 
 Fuel, first and plainly: nothing here accounts for the propellant a trip would take. A
-perfect photon rocket flying the Proxima flip-and-burn needs a mass ratio near 1600 —
-1600 kg of ship and fuel at departure for every 1 kg that arrives — and any rocket less
+perfect photon rocket flying the Proxima flip-and-burn needs a mass ratio near 40 —
+40 kg of ship and fuel at departure for every 1 kg that arrives — and any rocket less
 ideal than a photon rocket does worse. This tool reports the trip a ship *could* fly
 under constant proper acceleration, not one anyone could build or fuel.
 

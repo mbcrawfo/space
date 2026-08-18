@@ -13,7 +13,7 @@ from . import catalog, relativity
 
 CAVEAT = (
     "Fuel is ignored entirely: a perfect photon rocket flying the Proxima "
-    "flip-and-burn needs a mass ratio near 1600, and nothing less ideal does "
+    "flip-and-burn needs a mass ratio near 40, and nothing less ideal does "
     "better. Earth and the star are assumed mutually at rest at the star's "
     "present catalogued distance, so the star's own motion over the trip is "
     "not modelled, and the flip is instantaneous."

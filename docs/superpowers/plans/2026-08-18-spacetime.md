@@ -615,9 +615,9 @@ def test_json_carries_the_same_values_under_stable_keys(capsys):
     assert result["name"] == "Sirius"
     assert result["accel_g"] == 1.0
     assert result["profile"] == "flip-and-burn"
-    assert result["peak_velocity_c"] == pytest.approx(0.9829544010, rel=1e-6)
-    assert result["crew_years"] == pytest.approx(4.6076458917, rel=1e-6)
-    assert result["earth_years"] == pytest.approx(10.3585014181, rel=1e-6)
+    assert result["peak_velocity_c"] == pytest.approx(0.9829545435, rel=1e-6)
+    assert result["crew_years"] == pytest.approx(4.6076540630, rel=1e-6)
+    assert result["earth_years"] == pytest.approx(10.3585458636, rel=1e-6)
     assert "uncertainty" not in result
 
 
@@ -718,12 +718,17 @@ from . import catalog, relativity
 
 CAVEAT = (
     "Fuel is ignored entirely: a perfect photon rocket flying the Proxima "
-    "flip-and-burn needs a mass ratio near 1600, and nothing less ideal does "
+    "flip-and-burn needs a mass ratio near 40, and nothing less ideal does "
     "better. Earth and the star are assumed mutually at rest at the star's "
     "present catalogued distance, so the star's own motion over the trip is "
     "not modelled, and the flip is instantaneous."
 )
+```
 
+(An earlier draft of this plan put the figure at 1600, which is the round-trip mass ratio,
+not the one-way trip this tool models; the one-way figure is near 40.)
+
+```python
 PROFILE_DESCRIPTIONS = {
     "flip-and-burn": "flip and burn at the midpoint",
     "flyby": "burn all the way, no turnover",
@@ -958,7 +963,7 @@ Follow `starlight/README.md`'s structure and tone. Cover, in this order:
 2. **Usage** — the synopsis `python -m spacetime NAME [-a G] [--flyby] [--uncertainty] [--json] [--verbose] [--offline]`, then one line per flag matching the `--help` text.
 3. **How it works** — proper versus coordinate acceleration, and why "1 G" is the reading that means Earth-normal gravity on deck for the whole trip; the two profiles and where each reaches peak speed; the four closed-form equations from `relativity.py`'s docstring.
 4. **Exit codes** — a table: 0 success, 1 unknown star, 2 invalid acceleration, 3 network failure during the SIMBAD fallback.
-5. **What the model ignores** — fuel first and plainly (the Proxima mass ratio near 1600), then stellar motion over the trip, the instantaneous flip, the interstellar medium, and gravity wells.
+5. **What the model ignores** — fuel first and plainly (the Proxima mass ratio near 40 — an earlier draft of this plan put it at 1600, which is the round-trip figure, not the one-way trip this tool models), then stellar motion over the trip, the instantaneous flip, the interstellar medium, and gravity wells.
 6. **The duplicated catalog** — `catalog.py` and `stars.json` are copies of `starlight`'s, because tools in this repo do not import each other, and a distance corrected in one is not corrected in the other.
 7. **Running it** and **Tests** — mirroring `starlight/README.md`'s closing sections, including that tests never touch the network.
 
@@ -1037,3 +1042,5 @@ Summarise what was built, paste the verification output, and hand back for revie
 **Three things this plan settles that the spec left open**, all flagged in Task 3: the acceleration is validated before the star is resolved; the uncertainty block is skipped when the near bound would be non-positive; and peak speed is formatted to whatever precision stops it reading as a flat 100% of c.
 
 **One correction to the spec's testing section.** It lists "crew time is never greater than Earth time" as a universal invariant. At the degenerate Newtonian test point the ratio comes out as 1.0000000000000002 — float noise, not physics. So the invariant is asserted over the realistic range (0.1–1000 ly, 0.1–10 G), and the Newtonian test compares the two clocks with a tolerance instead.
+
+**One correction to Task 3's `test_json_carries_the_same_values_under_stable_keys`.** The Sirius expectations originally read `0.9829544010` / `4.6076458917` / `10.3585014181` — the same values `test_sirius_flip_and_burn_at_one_g` asserts, computed from the rounded literal `SIRIUS_LY = 8.6007`. But `build_result` computes `distance_ly` from the exact conversion `star.distance_pc * relativity.LY_PER_PC`, not from that rounded literal, so the JSON test's own values land a few parts in `1e-6` off — enough to fail its own `rel=1e-6` tolerance. The shipped test uses the values `build_result` actually produces: `0.9829545435` / `4.6076540630` / `10.3585458636`.

@@ -3,6 +3,9 @@
 Names arrive from humans in every possible spelling: `Betelgeuse`, `alpha ori`,
 `α Orionis`, `HD 39801`. Everything is compared in a normalized form —
 casefolded, Greek letters spelled out, punctuation and spacing dropped.
+
+``spacetime`` carries a copy of this module and ``stars.json``, so a correction here has
+to be copied across by hand.
 """
 
 import difflib

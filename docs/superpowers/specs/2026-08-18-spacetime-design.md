@@ -58,7 +58,10 @@ stopping. Apply the formulas once. Peak speed is reached at arrival.
 
 Computed at 1.00 G, with `g₀ = 9.80665 m/s²`, `c = 299792458 m/s`,
 `1 pc = 3.26156378 ly`, and a Julian year of 365.25 days. These are the fixtures the tests
-assert against.
+assert against. Each row is computed at the exact catalogue-derived distance
+(`distance_pc × LY_PER_PC`), not at the rounded figure printed in the distance column — the
+distance column is rounded for display only, so recomputing peak speed, crew time, or Earth
+time from the printed distance will land a few parts in the last digit off the table.
 
 | star             | distance   | profile | peak speed  | crew time  | Earth time  |
 | ---------------- | ---------- | ------- | ----------- | ---------- | ----------- |
@@ -205,8 +208,10 @@ Stated in the README and behind `--verbose`, because each one is a reason the nu
 a travel plan:
 
 - **Fuel.** The largest omission by far. A perfect photon rocket doing the Proxima
-  flip-and-burn needs a mass ratio around 1600; anything less ideal is worse. The tool
-  reports the trip a ship *could* fly, not one anybody can build.
+  flip-and-burn needs a mass ratio around 40; anything less ideal is worse. (An earlier
+  draft of this spec put the figure at 1600, which is the round-trip mass ratio, not the
+  one-way trip this tool models.) The tool reports the trip a ship *could* fly, not one
+  anybody can build.
 - **Stellar motion.** Earth and the star are assumed mutually at rest, at the star's
   present catalogued distance. Over the centuries a distant target takes in Earth's frame,
   the star's own proper and radial motion is a real effect and is not modelled.

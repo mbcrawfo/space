@@ -1,0 +1,9 @@
+[project]
+name = "spacetime"
+version = "0.1.0"
+description = "Work out how long a trip to another star takes, for the crew and for Earth"
+requires-python = ">=3.10"
+dependencies = []
+
+[tool.uv]
+package = false

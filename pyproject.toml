@@ -12,7 +12,7 @@ package = false
 required-version = "==0.12.5"
 
 [tool.uv.workspace]
-members = ["starlight"]
+members = ["spacetime", "starlight"]
 
 [dependency-groups]
 dev = ["pytest>=8.0", "ruff>=0.16.3"]

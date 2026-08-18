@@ -375,7 +375,7 @@ def solve(distance_ly: float, accel_g: float, *, flyby: bool = False) -> Trip:
 - [ ] **Step 5: Run the tests to verify they pass**
 
 Run: `uv run pytest spacetime -v`
-Expected: PASS — 14 named tests plus 25 parametrized invariant cases and 8 parametrized rejection cases.
+Expected: PASS — 46 test cases (13 plain, 25 from the parametrized invariants, 8 from the parametrized rejections).
 
 - [ ] **Step 6: Verify lint, format, and the full suite**
 
@@ -685,7 +685,7 @@ def test_offline_never_reaches_for_the_network(capsys):
     [
         (0.5, "50.00"),
         (0.9829544010, "98.30"),
-        (0.9999938003, "99.99938"),
+        (0.9999938003, "99.999"),
         (0.99999999999, "99.999999999"),
     ],
 )

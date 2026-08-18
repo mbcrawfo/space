@@ -8,6 +8,7 @@ independent tool; they share a toolchain and nothing else.
 | Tool | What it does |
 | ---- | ------------ |
 | [`starlight`](starlight/) | Tells you when the light you're seeing from a star left it. |
+| [`spacetime`](spacetime/) | Works out how long a trip to another star takes, for the crew and for Earth. |
 
 ## Getting started
 

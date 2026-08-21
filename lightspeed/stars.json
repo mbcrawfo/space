@@ -1,0 +1,618 @@
+[
+  {
+    "name": "Proxima Centauri",
+    "ra_deg": 217.42894,
+    "dec_deg": -62.67949,
+    "distance_ly": 4.2465,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Alpha Centauri",
+    "ra_deg": 219.90206,
+    "dec_deg": -60.83399,
+    "distance_ly": 4.3949,
+    "source": "SIMBAD plx 1997A&A...323L..49P, queried 2026-08-21"
+  },
+  {
+    "name": "Barnard's Star",
+    "ra_deg": 269.45208,
+    "dec_deg": 4.69336,
+    "distance_ly": 5.9629,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Luhman 16",
+    "ra_deg": 162.32881,
+    "dec_deg": -53.31947,
+    "distance_ly": 6.5029,
+    "source": "SIMBAD plx 2018A&A...618A.111L, queried 2026-08-21"
+  },
+  {
+    "name": "WISE 0855-0714",
+    "ra_deg": 133.81891,
+    "dec_deg": -7.24705,
+    "distance_ly": 7.4295,
+    "source": "SIMBAD plx 2021ApJS..253....7K, queried 2026-08-21"
+  },
+  {
+    "name": "Wolf 359",
+    "ra_deg": 164.1205,
+    "dec_deg": 7.01472,
+    "distance_ly": 7.8558,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Lalande 21185",
+    "ra_deg": 165.83415,
+    "dec_deg": 35.96988,
+    "distance_ly": 8.3044,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Sirius",
+    "ra_deg": 101.28716,
+    "dec_deg": -16.71612,
+    "distance_ly": 8.6009,
+    "source": "SIMBAD plx 2007A&A...474..653V, queried 2026-08-21"
+  },
+  {
+    "name": "Luyten 726-8",
+    "ra_deg": 24.75574,
+    "dec_deg": -17.95072,
+    "distance_ly": 8.8699,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Ross 154",
+    "ra_deg": 282.45568,
+    "dec_deg": -23.83624,
+    "distance_ly": 9.7063,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Ross 248",
+    "ra_deg": 355.47932,
+    "dec_deg": 44.17745,
+    "distance_ly": 10.3057,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Epsilon Eridani",
+    "ra_deg": 53.23269,
+    "dec_deg": -9.45826,
+    "distance_ly": 10.5016,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Lacaille 9352",
+    "ra_deg": 346.46682,
+    "dec_deg": -35.85307,
+    "distance_ly": 10.7241,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Ross 128",
+    "ra_deg": 176.93499,
+    "dec_deg": 0.80456,
+    "distance_ly": 11.0074,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "EZ Aquarii",
+    "ra_deg": 339.6399,
+    "dec_deg": -15.29993,
+    "distance_ly": 11.1089,
+    "source": "SIMBAD plx 2010A&ARv..18...67T, queried 2026-08-21"
+  },
+  {
+    "name": "61 Cygni",
+    "ra_deg": 316.72475,
+    "dec_deg": 38.74942,
+    "distance_ly": 11.4043,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Procyon",
+    "ra_deg": 114.8255,
+    "dec_deg": 5.22499,
+    "distance_ly": 11.4618,
+    "source": "SIMBAD plx 2007A&A...474..653V, queried 2026-08-21"
+  },
+  {
+    "name": "Struve 2398",
+    "ra_deg": 280.6946,
+    "dec_deg": 59.63039,
+    "distance_ly": 11.4908,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Groombridge 34",
+    "ra_deg": 4.59535,
+    "dec_deg": 44.02295,
+    "distance_ly": 11.6191,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "DX Cancri",
+    "ra_deg": 127.45564,
+    "dec_deg": 26.77601,
+    "distance_ly": 11.6797,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Epsilon Indi",
+    "ra_deg": 330.84022,
+    "dec_deg": -56.78598,
+    "distance_ly": 11.867,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Tau Ceti",
+    "ra_deg": 26.01701,
+    "dec_deg": -15.93748,
+    "distance_ly": 11.9118,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "GJ 1061",
+    "ra_deg": 53.99875,
+    "dec_deg": -44.5127,
+    "distance_ly": 11.9839,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "YZ Ceti",
+    "ra_deg": 18.12765,
+    "dec_deg": -16.99899,
+    "distance_ly": 12.1222,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Luyten's Star",
+    "ra_deg": 111.85208,
+    "dec_deg": 5.22579,
+    "distance_ly": 12.3485,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Teegarden's Star",
+    "ra_deg": 43.25372,
+    "dec_deg": 16.88129,
+    "distance_ly": 12.497,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Kapteyn's Star",
+    "ra_deg": 77.91912,
+    "dec_deg": -45.01843,
+    "distance_ly": 12.8308,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Lacaille 8760",
+    "ra_deg": 319.31362,
+    "dec_deg": -38.86736,
+    "distance_ly": 12.9472,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Kruger 60",
+    "ra_deg": 336.9978,
+    "dec_deg": 57.6959,
+    "distance_ly": 13.0494,
+    "source": "SIMBAD plx 2007A&A...474..653V, queried 2026-08-21"
+  },
+  {
+    "name": "SCR 1845-6357",
+    "ra_deg": 281.27189,
+    "dec_deg": -63.96318,
+    "distance_ly": 13.0638,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "DENIS 1048-3956",
+    "ra_deg": 162.06072,
+    "dec_deg": -39.93523,
+    "distance_ly": 13.1932,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Ross 614",
+    "ra_deg": 97.34746,
+    "dec_deg": -2.81356,
+    "distance_ly": 13.424,
+    "source": "SIMBAD plx 2018yCat.1345....0G, queried 2026-08-21"
+  },
+  {
+    "name": "UGPS 0722-05",
+    "ra_deg": 110.61628,
+    "dec_deg": -5.67599,
+    "distance_ly": 13.4331,
+    "source": "SIMBAD plx 2023ApJ...959...63S, queried 2026-08-21"
+  },
+  {
+    "name": "Wolf 1061",
+    "ra_deg": 247.57524,
+    "dec_deg": -12.66259,
+    "distance_ly": 14.05,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Van Maanen's Star",
+    "ra_deg": 12.29124,
+    "dec_deg": 5.38861,
+    "distance_ly": 14.0718,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Wolf 424",
+    "ra_deg": 188.32257,
+    "dec_deg": 9.02112,
+    "distance_ly": 14.1121,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Gliese 1",
+    "ra_deg": 1.35179,
+    "dec_deg": -37.35736,
+    "distance_ly": 14.1747,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "TZ Arietis",
+    "ra_deg": 30.05398,
+    "dec_deg": 13.05194,
+    "distance_ly": 14.578,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Gliese 687",
+    "ra_deg": 264.10791,
+    "dec_deg": 68.33914,
+    "distance_ly": 14.8395,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Gliese 674",
+    "ra_deg": 262.16644,
+    "dec_deg": -46.89519,
+    "distance_ly": 14.8492,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "LHS 292",
+    "ra_deg": 162.05256,
+    "dec_deg": -11.336,
+    "distance_ly": 14.8706,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "GJ 3622",
+    "ra_deg": 162.05256,
+    "dec_deg": -11.336,
+    "distance_ly": 14.8706,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Gliese 440",
+    "ra_deg": 176.42882,
+    "dec_deg": -64.84152,
+    "distance_ly": 15.1226,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Gliese 876",
+    "ra_deg": 343.31972,
+    "dec_deg": -14.2637,
+    "distance_ly": 15.2382,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "GJ 1245",
+    "ra_deg": 298.47701,
+    "dec_deg": 44.41426,
+    "distance_ly": 15.303,
+    "source": "SIMBAD plx 2018yCat.1345....0G, queried 2026-08-21"
+  },
+  {
+    "name": "LHS 288",
+    "ra_deg": 161.08847,
+    "dec_deg": -61.2098,
+    "distance_ly": 15.7586,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "GJ 1002",
+    "ra_deg": 1.67999,
+    "dec_deg": -7.53806,
+    "distance_ly": 15.806,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "DENIS 0255-4700",
+    "ra_deg": 43.76539,
+    "dec_deg": -47.01427,
+    "distance_ly": 15.8771,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Groombridge 1618",
+    "ra_deg": 152.84225,
+    "dec_deg": 49.45424,
+    "distance_ly": 15.8857,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Gliese 412",
+    "ra_deg": 166.36907,
+    "dec_deg": 43.52677,
+    "distance_ly": 15.9969,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "WISE 1639-6847",
+    "ra_deg": 249.92016,
+    "dec_deg": -68.79407,
+    "distance_ly": 16.1224,
+    "source": "SIMBAD plx 2014ApJ...796...39T, queried 2026-08-21"
+  },
+  {
+    "name": "AD Leonis",
+    "ra_deg": 154.90117,
+    "dec_deg": 19.87,
+    "distance_ly": 16.1939,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Gliese 832",
+    "ra_deg": 323.39156,
+    "dec_deg": -49.009,
+    "distance_ly": 16.2005,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "GJ 1005",
+    "ra_deg": 3.86713,
+    "dec_deg": -16.13379,
+    "distance_ly": 16.2647,
+    "source": "SIMBAD plx 2007A&A...474..653V, queried 2026-08-21"
+  },
+  {
+    "name": "Gliese 682",
+    "ra_deg": 264.26527,
+    "dec_deg": -44.31921,
+    "distance_ly": 16.3328,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "EV Lacertae",
+    "ra_deg": 341.70721,
+    "dec_deg": 44.33399,
+    "distance_ly": 16.4761,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "70 Ophiuchi",
+    "ra_deg": 271.36369,
+    "dec_deg": 2.5001,
+    "distance_ly": 16.5797,
+    "source": "SIMBAD plx 2007A&A...474..653V, queried 2026-08-21"
+  },
+  {
+    "name": "Altair",
+    "ra_deg": 297.69583,
+    "dec_deg": 8.86832,
+    "distance_ly": 16.7303,
+    "source": "SIMBAD plx 2007A&A...474..653V, queried 2026-08-21"
+  },
+  {
+    "name": "GJ 3379",
+    "ra_deg": 90.0146,
+    "dec_deg": 2.70655,
+    "distance_ly": 16.9861,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "DENIS 0817-6155",
+    "ra_deg": 124.375,
+    "dec_deg": -61.92102,
+    "distance_ly": 17.0018,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Gliese 445",
+    "ra_deg": 176.92245,
+    "dec_deg": 78.69116,
+    "distance_ly": 17.1368,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "EI Cancri",
+    "ra_deg": 134.56276,
+    "dec_deg": 19.76304,
+    "distance_ly": 17.1661,
+    "source": "SIMBAD plx 1980AJ.....85..454H, queried 2026-08-21"
+  },
+  {
+    "name": "2MASS 1540-5101",
+    "ra_deg": 235.1814,
+    "dec_deg": -51.02666,
+    "distance_ly": 17.3738,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "LHS 1723",
+    "ra_deg": 75.48928,
+    "dec_deg": -6.94622,
+    "distance_ly": 17.5309,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Gliese 526",
+    "ra_deg": 206.4324,
+    "dec_deg": 14.89152,
+    "distance_ly": 17.7263,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Stein 2051",
+    "ra_deg": 67.79798,
+    "dec_deg": 58.97707,
+    "distance_ly": 17.9955,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Gliese 251",
+    "ra_deg": 103.70399,
+    "dec_deg": 33.26818,
+    "distance_ly": 18.2146,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "LP 816-60",
+    "ra_deg": 313.13757,
+    "dec_deg": -16.97472,
+    "distance_ly": 18.3305,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "WISE 0350-5658",
+    "ra_deg": 57.50249,
+    "dec_deg": -56.9734,
+    "distance_ly": 18.4896,
+    "source": "SIMBAD plx 2021ApJS..253....7K, queried 2026-08-21"
+  },
+  {
+    "name": "LSR 1835+3259",
+    "ra_deg": 278.90783,
+    "dec_deg": 32.99814,
+    "distance_ly": 18.5534,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Gliese 205",
+    "ra_deg": 82.86415,
+    "dec_deg": -3.67723,
+    "distance_ly": 18.6042,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Gliese 229",
+    "ra_deg": 92.64423,
+    "dec_deg": -21.86463,
+    "distance_ly": 18.7906,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Sigma Draconis",
+    "ra_deg": 293.08996,
+    "dec_deg": 69.66118,
+    "distance_ly": 18.7993,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Gliese 213",
+    "ra_deg": 85.53862,
+    "dec_deg": 12.48933,
+    "distance_ly": 18.8883,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Gliese 570",
+    "ra_deg": 224.36667,
+    "dec_deg": -21.41548,
+    "distance_ly": 19.1987,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Gliese 693",
+    "ra_deg": 266.64264,
+    "dec_deg": -57.31904,
+    "distance_ly": 19.2078,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Gliese 754",
+    "ra_deg": 290.19993,
+    "dec_deg": -45.55823,
+    "distance_ly": 19.2724,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Gliese 908",
+    "ra_deg": 357.30219,
+    "dec_deg": 2.40122,
+    "distance_ly": 19.2745,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Gliese 752",
+    "ra_deg": 289.23024,
+    "dec_deg": 5.1689,
+    "distance_ly": 19.2922,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Gliese 588",
+    "ra_deg": 233.05388,
+    "dec_deg": -41.27559,
+    "distance_ly": 19.2996,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Eta Cassiopeiae",
+    "ra_deg": 12.27623,
+    "dec_deg": 57.81518,
+    "distance_ly": 19.3184,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "36 Ophiuchi",
+    "ra_deg": 258.83743,
+    "dec_deg": -26.60282,
+    "distance_ly": 19.3519,
+    "source": "SIMBAD plx 2007A&A...474..653V, queried 2026-08-21"
+  },
+  {
+    "name": "YZ Canis Minoris",
+    "ra_deg": 116.16738,
+    "dec_deg": 3.55247,
+    "distance_ly": 19.533,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "WISE 1541-2250",
+    "ra_deg": 235.46787,
+    "dec_deg": -22.8402,
+    "distance_ly": 19.542,
+    "source": "SIMBAD plx 2021ApJS..253....7K, queried 2026-08-21"
+  },
+  {
+    "name": "Gliese 783",
+    "ra_deg": 302.79974,
+    "dec_deg": -36.10121,
+    "distance_ly": 19.6093,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "82 Eridani",
+    "ra_deg": 49.98188,
+    "dec_deg": -43.06978,
+    "distance_ly": 19.7045,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "Delta Pavonis",
+    "ra_deg": 302.1817,
+    "dec_deg": -66.18207,
+    "distance_ly": 19.8931,
+    "source": "SIMBAD plx 2020yCat.1350....0G, queried 2026-08-21"
+  },
+  {
+    "name": "2MASS 0937+2931",
+    "ra_deg": 144.39533,
+    "dec_deg": 29.52805,
+    "distance_ly": 19.9618,
+    "source": "SIMBAD plx 2012ApJ...752...56F, queried 2026-08-21"
+  }
+]

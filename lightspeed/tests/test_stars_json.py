@@ -36,6 +36,15 @@ def test_names_are_unique_and_sol_is_not_in_the_file():
     assert "Sol" not in names
 
 
+def test_no_two_entries_are_the_same_object():
+    """Two display names for one SIMBAD object would emit two coincident shells; the catalogue is one entry per system."""
+    seen = {}
+    for entry in load_raw():
+        key = (round(entry["ra_deg"], 3), round(entry["dec_deg"], 3))
+        assert key not in seen, f"{entry['name']} shares a position with {seen[key]}"
+        seen[key] = entry["name"]
+
+
 def test_entries_are_sorted_by_distance():
     distances = [entry["distance_ly"] for entry in load_raw()]
     assert distances == sorted(distances)

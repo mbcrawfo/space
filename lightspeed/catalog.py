@@ -58,9 +58,8 @@ def _parse_entry(index: int, raw: object) -> Star:
         if field not in raw:
             raise CatalogError(f"{where} in the star catalogue is missing '{field}'.")
         if not isinstance(raw[field], kind) or isinstance(raw[field], bool):
-            raise CatalogError(
-                f"{where} in the star catalogue has a non-{kind.__name__ if isinstance(kind, type) else 'numeric'} '{field}'."
-            )
+            expected = kind.__name__ if isinstance(kind, type) else "number"
+            raise CatalogError(f"{where} in the star catalogue has a non-{expected} '{field}'.")
     name = raw["name"]
     if not name:
         raise CatalogError(f"{where} in the star catalogue has an empty name.")

@@ -132,3 +132,28 @@ def test_arrival_times_match_the_real_catalogue_pairwise_distances():
     for arrival in sim.arrivals:
         expected = np.linalg.norm(sim.positions[arrival.source] - sim.positions[arrival.target])
         assert arrival.time_yr == pytest.approx(expected)
+
+
+def test_equal_arrival_times_across_distinct_pairs_sort_by_source_then_target():
+    # Sol at the origin, A at (3, 0, 0), B at (0, 3, 0): Sol-A and Sol-B are both exactly
+    # 3 ly, so the four arrivals they produce tie on time_yr and must break the tie by
+    # (source, target) rather than by whichever pair happened to be computed first.
+    sim = simulation.Simulation([catalog.SOL, star("A", 3.0, 0.0, 0.0), star("B", 0.0, 3.0, 0.0)])
+    schedule = [(round(a.time_yr, 9), a.source, a.target) for a in sim.arrivals]
+    assert schedule[:4] == [(3.0, 0, 1), (3.0, 0, 2), (3.0, 1, 0), (3.0, 2, 0)]
+    a_to_b = math.hypot(3.0, 3.0)
+    assert schedule[4:] == [(round(a_to_b, 9), 1, 2), (round(a_to_b, 9), 2, 1)]
+
+
+def test_advance_zero_while_running_returns_nothing_and_does_not_move_the_clock():
+    sim = simulation.Simulation(line_of_three())
+    sim.start()
+    assert sim.advance(0.0) == []
+    assert sim.time_yr == 0.0
+
+
+def test_a_bad_wall_step_is_rejected_even_while_paused():
+    sim = simulation.Simulation(line_of_three())
+    assert sim.running is False
+    with pytest.raises(ValueError, match="wall-clock"):
+        sim.advance(-0.1)

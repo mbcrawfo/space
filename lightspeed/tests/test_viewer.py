@@ -2,6 +2,7 @@ import io
 
 import numpy as np
 import pytest
+import pyvista
 
 from lightspeed import catalog, simulation, viewer
 
@@ -20,6 +21,7 @@ class FakePlotter:
         self.meshes = []  # (mesh, kwargs)
         self.actors = []
         self.texts = {}  # name -> (text, kwargs)
+        self.text_calls = {}  # name -> count of add_text calls for that name
         self.keys = {}  # key -> callback
         self.timers = []  # (max_steps, duration, callback)
         self.labels = None
@@ -38,7 +40,9 @@ class FakePlotter:
         self.labels = (np.asarray(points), list(labels), kwargs)
 
     def add_text(self, text, **kwargs):
-        self.texts[kwargs["name"]] = (text, kwargs)
+        name = kwargs["name"]
+        self.texts[name] = (text, kwargs)
+        self.text_calls[name] = self.text_calls.get(name, 0) + 1
 
     def add_key_event(self, key, callback):
         self.keys[key] = callback
@@ -135,13 +139,15 @@ def test_build_sets_up_the_scene_the_overlays_the_keys_and_the_timer():
     assert callable(callback)
 
 
-def test_ticking_while_paused_keeps_shells_hidden_and_still_renders():
+def test_ticking_while_paused_keeps_shells_hidden_and_does_not_render():
     view, sim, plotter, clock, _ = make_viewer()
     clock.now += 1.0
     plotter.timers[0][2](1)  # the registered timer callback is view.on_tick
     assert sim.time_yr == 0.0
     assert all(actor.visibility is False for actor in view.shells)
-    assert plotter.renders == 1
+    # pyvista's real Timer.execute renders the window itself right after invoking this
+    # callback, so on_tick must not render a second time.
+    assert plotter.renders == 0
 
 
 def test_space_starts_and_ticks_grow_every_shell_to_the_clock():
@@ -203,6 +209,18 @@ def test_a_highlight_fades_back_after_highlight_seconds():
     assert tuple(mesh["rgb"][0]) == viewer.SOL_COLOR  # Sol goes back to its own colour, not white
 
 
+def test_an_arrival_tick_refreshes_the_log_text_exactly_once():
+    """A burst of several arrivals in one tick must add_text('log', ...) only once, not once per arrival."""
+    view, _, plotter, clock, _ = make_viewer()
+    view.toggle()
+    view.on_tick(1)  # primes the frame clock, no arrivals yet
+    plotter.text_calls.clear()
+    clock.now += 10.0  # far enough for all six arrivals to land in this one tick
+    view.on_tick(2)
+    assert len(view.log_lines) == 6
+    assert plotter.text_calls["log"] == 1
+
+
 def test_the_log_keeps_only_the_last_lines():
     view, _, plotter, clock, _ = make_viewer()
     view.toggle()
@@ -212,8 +230,9 @@ def test_the_log_keeps_only_the_last_lines():
     assert len(view.log_lines) == 6
     view.log_lines.clear()
     for i in range(viewer.LOG_LINES + 3):
-        view._log(f"line {i}")
+        view._log(f"line {i}")  # append-only: does not touch plotter.texts by itself
     assert view.log_lines == [f"line {i}" for i in range(3, viewer.LOG_LINES + 3)]
+    view._refresh_log()
     assert plotter.texts["log"][0] == "\n".join(view.log_lines)
 
 
@@ -277,3 +296,11 @@ def test_run_builds_a_real_plotter_and_shows_it(monkeypatch):
     assert created["shown"]["title"] == "lightspeed"
     assert len(plotter.timers) == 1
     assert "paused" not in plotter.texts["clock"][0]  # autostart
+
+
+def test_build_works_against_a_real_off_screen_plotter():
+    """A CI-safe smoke test against real pyvista/VTK objects, not the fake — no show(),
+    render(), or screenshot(), so nothing tries to put a window on screen."""
+    plotter = pyvista.Plotter(off_screen=True)
+    viewer.Viewer(simulation.Simulation([catalog.SOL, star("A", 3.0)]), plotter).build()
+    assert len(plotter.renderer.actors) >= 4  # shells + points + labels + text overlays

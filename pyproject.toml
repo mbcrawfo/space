@@ -47,3 +47,6 @@ pythonpath = ["."]
 # importlib mode keys each test module by its file path instead, so it can tell
 # same-named modules in different tools apart.
 addopts = "-ra --strict-markers --import-mode=importlib"
+# VTK's numpy_support still sets ndarray.shape in place, which NumPy ≥ 2.5 deprecates; the
+# warning is VTK's to fix, not ours. Drop this filter once the pinned vtk stops emitting it.
+filterwarnings = ["ignore:Setting the shape on a NumPy array has been deprecated:DeprecationWarning:vtkmodules.util.numpy_support"]

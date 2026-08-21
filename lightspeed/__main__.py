@@ -17,13 +17,12 @@ from . import catalog
 DESCRIPTION = """\
 Watch light spread out between the nearest stars, in 3D.
 
-Opens a window centred on Sol with nearly ninety stellar systems out to 20
-light-years, each at its true position relative to Earth and labelled with its
-name and distance. One scene unit is one light-year, so the layout is accurate
-and only the camera scales it. Press space and every star emits a single flash
-at the same instant; each flash grows as a translucent
-sphere at one light-year per year of simulated time. When a shell sweeps over
-another star that star flashes red, and a log line says whose light reached whom
+Opens a window centred on Sol with nearly ninety stellar systems out to 20 light-years,
+each at its true position relative to Earth and labelled with its name and distance. One
+scene unit is one light-year, so the layout is accurate and only the camera scales it.
+Press space and every star emits a single flash at the same instant; each flash grows as
+a translucent sphere at one light-year per year of simulated time. When a shell sweeps
+over another star that star flashes red, and a log line says whose light reached whom
 and in what year. The window stays open until you close it (q)."""
 
 EXAMPLES = """\
@@ -34,7 +33,7 @@ Examples:
 
 Keys in the window:
   space  start / pause          + / -  faster / slower (×2 / ÷2)
-  r      reset to t = 0         q      quit
+  r      reset t = 0, refit the camera    q  quit
   drag to orbit, scroll to zoom, middle-drag to pan
 
 Exit codes:

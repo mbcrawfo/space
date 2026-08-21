@@ -9,6 +9,14 @@ actors are scaled every frame (far cheaper than rewriting points); star colours 
 uint8 "rgb" point array that is mutated in place; text overlays are re-added under the
 same name, which replaces the previous actor; and every piece of text carries an explicit
 colour, because pyvista's default theme draws text black.
+
+pyvista's `Timer.execute` renders the window itself right after invoking the timer
+callback (and it does this every `FRAME_MS`, even while paused), so neither `on_tick` nor
+any key handler calls `plotter.render()` — that would be a second full render per frame,
+and at this window size and depth-peeling setting a render is tens of milliseconds, so a
+second one roughly halves the achievable frame rate. Every text overlay is also added
+with `render=False` for the same reason: `add_text`'s default is to render immediately,
+and text changes only need to appear by the next timer-driven render, not sooner.
 """
 
 import sys
@@ -28,15 +36,15 @@ LOG_LINES = 8
 SOL_COLOR = (255, 220, 80)
 STAR_COLOR = (235, 235, 235)
 HIGHLIGHT_COLOR = (255, 80, 60)
-SHELL_OPACITY = 0.12
+SHELL_OPACITY = 0.07
 SHELL_PALETTE = ("#4fc3f7", "#ce93d8", "#80cbc4", "#fff176", "#ffab91", "#a5d6a7", "#90caf9", "#f48fb1")
 TEXT_COLOR = "white"
-CAMERA_DISTANCE_LY = 45.0
+CAMERA_DISTANCE_LY = 55.0
 
 HELP_TEXT = (
     "space  start / pause\n"
     "+ / -  faster / slower\n"
-    "r      reset\n"
+    "r      reset t = 0 and refit the camera\n"
     "drag   orbit    scroll  zoom    middle-drag  pan\n"
     "q      quit"
 )
@@ -75,7 +83,9 @@ class Viewer:
         self._add_shells()
         self._add_stars()
         self._add_labels()
-        self.plotter.add_text(HELP_TEXT, position="lower_right", font_size=9, color=TEXT_COLOR, name="help")
+        self.plotter.add_text(
+            HELP_TEXT, position="lower_right", font_size=9, color=TEXT_COLOR, shadow=True, name="help", render=False
+        )
         self._refresh_clock()
         self._refresh_log()
         self.plotter.add_key_event("space", self.toggle)
@@ -105,7 +115,7 @@ class Viewer:
         self._base_colors = colors.copy()
         self._points = pv.PolyData(self.sim.positions.copy())
         self._points["rgb"] = colors
-        self.plotter.add_mesh(self._points, scalars="rgb", rgb=True, render_points_as_spheres=True, point_size=9)
+        self.plotter.add_mesh(self._points, scalars="rgb", rgb=True, render_points_as_spheres=True, point_size=12)
 
     def _add_labels(self) -> None:
         self.plotter.add_point_labels(
@@ -123,17 +133,27 @@ class Viewer:
     def _refresh_clock(self) -> None:
         state = "" if self.sim.running else "   [paused — press space]"
         text = f"t = {self.sim.time_yr:,.1f} yr   {format_speed(self.sim.years_per_second)}{state}"
-        self.plotter.add_text(text, position="upper_left", font_size=12, color=TEXT_COLOR, name="clock")
+        self.plotter.add_text(
+            text, position="upper_left", font_size=12, color=TEXT_COLOR, shadow=True, name="clock", render=False
+        )
 
     def _refresh_log(self) -> None:
         self.plotter.add_text(
-            "\n".join(self.log_lines), position="lower_left", font_size=9, color=TEXT_COLOR, name="log"
+            "\n".join(self.log_lines),
+            position="lower_left",
+            font_size=9,
+            color=TEXT_COLOR,
+            shadow=True,
+            name="log",
+            render=False,
         )
 
     def _log(self, line: str) -> None:
+        # Append-only: on_tick refreshes the "log" text actor once per tick, not once per
+        # arrival, so a burst of dozens of arrivals in one frame does not force dozens of
+        # renders.
         self.log_lines.append(line)
         del self.log_lines[:-LOG_LINES]
-        self._refresh_log()
 
     # -- key handlers ---------------------------------------------------------
 
@@ -172,15 +192,20 @@ class Viewer:
             line = format_arrival(self.sim, arrival)
             self._log(line)
             print(line, file=self.out)
+        if arrivals:
+            self._refresh_log()
         if arrivals or (self._lit_until > 0.0).any():
             self._apply_colors(now)
         if self.sim.running:
             self._apply_radius()
             self._refresh_clock()
-        self.plotter.render()
+        # No self.plotter.render() here: pyvista's Timer.execute renders the window right
+        # after this callback returns (every FRAME_MS, even while paused), so rendering
+        # again here would be a second full render per frame.
 
     def _apply_colors(self, now: float | None = None) -> None:
-        assert self._points is not None and self._base_colors is not None
+        if self._points is None or self._base_colors is None:
+            raise RuntimeError("Viewer.build() must run before colours can change.")
         now = self.clock() if now is None else now
         expired = (self._lit_until > 0.0) & (self._lit_until <= now)
         self._lit_until[expired] = 0.0

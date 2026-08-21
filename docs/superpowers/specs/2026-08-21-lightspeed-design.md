@@ -17,14 +17,14 @@ reaches it, and an on-screen log records the arrival.
 It is pure Python on the desktop — a VTK window driven through PyVista — not a web page.
 
 ```
-$ python -m lightspeed --speed 2
+$ python -m lightspeed --within 5 --speed 2
 (a window opens; press space to start)
-y    4.2  light from Proxima Centauri reaches Alpha Centauri
-y    4.2  light from Alpha Centauri reaches Proxima Centauri
+y    0.2  light from Proxima Centauri reaches Alpha Centauri
+y    0.2  light from Alpha Centauri reaches Proxima Centauri
 y    4.2  light from Sol reaches Proxima Centauri
 y    4.2  light from Proxima Centauri reaches Sol
 y    4.4  light from Sol reaches Alpha Centauri
-...
+y    4.4  light from Alpha Centauri reaches Sol
 ```
 
 Decisions made during brainstorming, in one place:

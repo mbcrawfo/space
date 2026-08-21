@@ -36,12 +36,14 @@ In the window:
 | --- | --- |
 | `space` | start / pause |
 | `+` / `-` | double / halve the speed |
-| `r` | reset to t = 0 |
+| `r` | reset to t = 0 and refit the camera |
 | `q` | quit |
 | drag / scroll / middle-drag | orbit / zoom / pan (VTK's trackball camera) |
 
 The upper-left corner shows the simulated clock and speed, the lower-left the last eight
-arrivals, the lower-right the key legend. Every arrival is also printed to stdout.
+arrivals, the lower-right the key legend. Every arrival is also printed to stdout. VTK's
+other default key bindings also remain active — `w` switches to wireframe, `s` back to
+surface, `f` flies the camera to the point under the cursor, and so on.
 
 ## How it works
 

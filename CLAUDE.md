@@ -44,7 +44,7 @@ history and keep current documentation in the tool's `README.md`.
 All commands run from the repo root. `uv` manages the single shared `.venv`.
 
 ```bash
-uv sync                          # create/update the venv from uv.lock
+uv sync --all-packages           # create/update the venv from uv.lock (members' deps too)
 uv run pytest                    # run every tool's tests
 uv run pytest starlight          # run one tool's tests
 uv run ruff check .              # lint
@@ -52,6 +52,7 @@ uv run ruff check --fix .        # lint, applying safe fixes
 uv run ruff format .             # format
 uv run ruff format --check .     # verify formatting without writing (what CI runs)
 uv run python -m starlight Sirius             # run a tool
+uv run python -m lightspeed                   # run a tool with a window
 ```
 
 ## Lint and formatting requirements
@@ -177,6 +178,9 @@ Test the help text and the error hints like any other behavior — assert agains
    into the shared venv but does not try to build it as a distribution. Tools are run with
    `python -m <tool>`, not installed.
 
+   A tool may declare third-party `dependencies`; they install into the shared venv with
+   `uv sync --all-packages` (plain `uv sync` only installs the root's).
+
 2. Add `__init__.py` and, for anything with a CLI, `__main__.py` ending in:
 
    ```python
@@ -192,7 +196,8 @@ Test the help text and the error hints like any other behavior — assert agains
    both `["."]` and cover every tool, and pytest collects tests from the whole repo, so a
    new tool's tests cannot be silently skipped.
 
-4. Run `uv sync` to refresh `uv.lock`, then `uv run ruff check . && uv run ruff format . && uv run pytest`.
+4. Run `uv sync --all-packages` to refresh `uv.lock`, then
+   `uv run ruff check . && uv run ruff format . && uv run pytest`.
 
 Because each tool is its own package, two tools may both have a `config.py` or a `catalog.py`
 without shadowing each other.
@@ -218,8 +223,9 @@ supported by declaration, not by testing.
 
 ## CI
 
-`.github/workflows/ci.yml` runs on pushes to `main` and on pull requests: `uv sync --locked`,
-then lint, format check, and tests, as a single job on Python 3.13.
+`.github/workflows/ci.yml` runs on pushes to `main` and on pull requests:
+`uv sync --all-packages --locked`, then lint, format check, and tests, as a single job on
+Python 3.13.
 
 Every action is **pinned to a commit SHA** with the version tag in a trailing comment. When
 bumping an action, update both the SHA and the comment; resolve the SHA with:

@@ -9,13 +9,14 @@ independent tool; they share a toolchain and nothing else.
 | ---- | ------------ |
 | [`starlight`](starlight/) | Tells you when the light you're seeing from a star left it. |
 | [`spacetime`](spacetime/) | Works out how long a trip to another star takes, for the crew and for Earth. |
+| [`lightspeed`](lightspeed/) | Shows light spreading out between the nearest stars, in 3D. |
 
 ## Getting started
 
 The repo is a [uv](https://docs.astral.sh/uv/) workspace with a single shared virtualenv.
 
 ```bash
-uv sync                                       # create the venv from uv.lock
+uv sync --all-packages                        # create the venv from uv.lock, every tool's deps included
 uv run pytest                                 # run every tool's tests
 uv run python -m starlight Sirius             # run a tool
 ```

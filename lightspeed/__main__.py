@@ -28,9 +28,9 @@ and in what year. The window stays open until you close it (q)."""
 
 EXAMPLES = """\
 Examples:
-  python -m lightspeed                          the default: 1 year per second, all stars
+  python -m lightspeed                          the default: 1 yr/s, every star
   python -m lightspeed --speed 0.5              slow motion, half a year per second
-  python -m lightspeed --within 12 --autostart  the two dozen nearest systems, running at once
+  python -m lightspeed --within 12 --autostart  two dozen nearest, already running
 
 Keys in the window:
   space  start / pause          + / -  faster / slower (×2 / ÷2)

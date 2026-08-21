@@ -87,6 +87,14 @@ def test_an_unreadable_catalogue_exits_one(run_stub, capsys, monkeypatch):
     assert run_stub == []
 
 
+def test_an_empty_catalogue_exits_one(run_stub, capsys, monkeypatch):
+    monkeypatch.setattr(catalog, "load", lambda path=None: [catalog.SOL])
+    code, _, err = run(capsys=capsys)
+    assert code == 1
+    assert "empty" in err
+    assert run_stub == []
+
+
 def test_validate_positive_accepts_normal_numbers():
     lightspeed.validate_positive("--speed", 0.25)
     lightspeed.validate_positive("--within", 20.0)

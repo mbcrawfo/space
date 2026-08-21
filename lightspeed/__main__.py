@@ -39,7 +39,7 @@ Keys in the window:
 
 Exit codes:
   0  the window was closed
-  1  no star lies within --within, or the bundled catalogue is unreadable
+  1  no star within --within, or the catalogue is unreadable or empty
   2  invalid --speed or --within, or a command line argparse rejected
 """
 

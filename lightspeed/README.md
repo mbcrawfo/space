@@ -15,6 +15,7 @@ y    0.2  light from Alpha Centauri reaches Proxima Centauri
 y    4.2  light from Sol reaches Proxima Centauri
 y    4.2  light from Proxima Centauri reaches Sol
 y    4.4  light from Sol reaches Alpha Centauri
+y    4.4  light from Alpha Centauri reaches Sol
 ```
 
 ## Usage
@@ -64,11 +65,11 @@ reached, and appends the arrival to the log.
 
 ## Exit codes
 
-| Code | Meaning                                                                     |
-| ---- | ---------------------------------------------------------------------------- |
-| 0    | The window was closed                                                       |
-| 1    | No star within `--within`, or the bundled catalogue is unreadable or empty  |
-| 2    | Invalid `--speed` or `--within`, or a rejected command line                 |
+| Code | Meaning                                                                    |
+| ---- | -------------------------------------------------------------------------- |
+| 0    | The window was closed                                                      |
+| 1    | No star within `--within`, or the bundled catalogue is unreadable or empty |
+| 2    | Invalid `--speed` or `--within`, or a rejected command line                |
 
 ## What the model ignores
 

@@ -84,7 +84,9 @@ from _pytest.monkeypatch import MonkeyPatch
 
 
 def _explode(*args, **kwargs):
-    raise AssertionError("a test tried to open a window via pyvista.Plotter.show; drive the Viewer with a fake plotter instead")
+    raise AssertionError(
+        "a test tried to open a window via pyvista.Plotter.show; drive the Viewer with a fake plotter instead"
+    )
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -189,7 +191,13 @@ def test_there_are_roughly_a_hundred_systems():
 
 @pytest.mark.parametrize(
     ("name", "distance_ly"),
-    [("Proxima Centauri", 4.25), ("Alpha Centauri", 4.37), ("Barnard's Star", 5.96), ("Sirius", 8.6), ("Tau Ceti", 11.9)],
+    [
+        ("Proxima Centauri", 4.25),
+        ("Alpha Centauri", 4.37),
+        ("Barnard's Star", 5.96),
+        ("Sirius", 8.6),
+        ("Tau Ceti", 11.9),
+    ],
 )
 def test_anchor_distances_are_sane(name, distance_ly):
     """Catches a transcription slip (parsecs left as parsecs, a wrong identifier) before it reaches the screen."""
@@ -544,7 +552,12 @@ def test_load_names_the_offending_entry(tmp_path, bad):
 
 
 def test_within_keeps_sol_and_everything_closer_than_the_limit():
-    stars = [catalog.SOL, star(name="near", distance=4.0), star(name="edge", distance=10.0), star(name="far", distance=10.1)]
+    stars = [
+        catalog.SOL,
+        star(name="near", distance=4.0),
+        star(name="edge", distance=10.0),
+        star(name="far", distance=10.1),
+    ]
     assert [s.name for s in catalog.within(stars, 10.0)] == ["Sol", "near", "edge"]
 ```
 
@@ -616,7 +629,9 @@ def _parse_entry(index: int, raw: object) -> Star:
         if field not in raw:
             raise CatalogError(f"{where} in the star catalogue is missing '{field}'.")
         if not isinstance(raw[field], kind) or isinstance(raw[field], bool):
-            raise CatalogError(f"{where} in the star catalogue has a non-{kind.__name__ if isinstance(kind, type) else 'numeric'} '{field}'.")
+            raise CatalogError(
+                f"{where} in the star catalogue has a non-{kind.__name__ if isinstance(kind, type) else 'numeric'} '{field}'."
+            )
     name = raw["name"]
     if not name:
         raise CatalogError(f"{where} in the star catalogue has an empty name.")
@@ -626,7 +641,9 @@ def _parse_entry(index: int, raw: object) -> Star:
     if not (math.isfinite(dec) and -90.0 <= dec <= 90.0):
         raise CatalogError(f"{where} in the star catalogue has declination {dec}, outside [-90, 90].")
     if not (math.isfinite(distance) and distance > 0.0):
-        raise CatalogError(f"{where} in the star catalogue has distance {distance}; it must be a positive, finite number of light-years.")
+        raise CatalogError(
+            f"{where} in the star catalogue has distance {distance}; it must be a positive, finite number of light-years."
+        )
     return Star(name=name, ra_deg=ra, dec_deg=dec, distance_ly=distance, source=raw["source"])
 
 
@@ -1121,8 +1138,9 @@ def test_space_starts_and_ticks_grow_every_shell_to_the_clock():
     view, sim, plotter, clock, _ = make_viewer(speed=2.0)
     plotter.keys["space"]()
     assert sim.running is True
+    view.on_tick(1)  # the first tick only primes the frame clock
     clock.now += 0.5  # 0.5 s × 2 yr/s = 1 yr
-    view.on_tick(1)
+    view.on_tick(2)
     assert sim.time_yr == pytest.approx(1.0)
     for actor in view.shells:
         assert actor.visibility is True
@@ -1387,7 +1405,9 @@ class Viewer:
         self.plotter.add_text(text, position="upper_left", font_size=12, color=TEXT_COLOR, name="clock")
 
     def _refresh_log(self) -> None:
-        self.plotter.add_text("\n".join(self.log_lines), position="lower_left", font_size=9, color=TEXT_COLOR, name="log")
+        self.plotter.add_text(
+            "\n".join(self.log_lines), position="lower_left", font_size=9, color=TEXT_COLOR, name="log"
+        )
 
     def _log(self, line: str) -> None:
         self.log_lines.append(line)
@@ -1710,10 +1730,10 @@ Opens a window centred on Sol with about a hundred stellar systems out to 20
 light-years, each at its true position relative to Earth and labelled with its name
 and distance. One scene unit is one light-year, so the layout is accurate and only
 the camera scales it. Press space and every star emits a single flash at the same
-instant; each flash grows as a translucent sphere at one light-year per simulated
-year. When a shell sweeps over another star that star flashes red, and a log line
-says whose light reached whom and in what year. The window stays open until you
-close it (q)."""
+instant; each flash grows as a translucent sphere at one light-year per year of
+simulated time. When a shell sweeps over another star that star flashes red, and a
+log line says whose light reached whom and in what year. The window stays open until
+you close it (q)."""
 
 EXAMPLES = """\
 Examples:

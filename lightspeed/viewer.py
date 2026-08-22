@@ -65,7 +65,7 @@ def format_speed(years_per_second: float) -> str:
 def format_arrival(sim: Simulation, arrival: Arrival) -> str:
     source = sim.stars[arrival.source].name
     target = sim.stars[arrival.target].name
-    return f"y {arrival.time_yr:6.1f}  light from {source} reaches {target}"
+    return f"{arrival.time_yr:5.1f} yr  light from {source} reaches {target}"
 
 
 class Viewer:

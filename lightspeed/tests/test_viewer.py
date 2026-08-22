@@ -248,7 +248,7 @@ def test_an_arrival_highlights_the_target_and_logs_a_line():
     assert tuple(mesh["rgb"][1]) == viewer.HIGHLIGHT_COLOR  # A was reached by Sol's light
     assert tuple(mesh["rgb"][0]) == viewer.HIGHLIGHT_COLOR  # and Sol by A's
     assert tuple(mesh["rgb"][2]) == viewer.STAR_COLOR
-    assert view.log_lines == ["y    3.0  light from Sol reaches A", "y    3.0  light from A reaches Sol"]
+    assert view.log_lines == ["  3.0 yr  light from Sol reaches A", "  3.0 yr  light from A reaches Sol"]
     assert plotter.texts["log"][0] == "\n".join(view.log_lines)
 
 
@@ -326,7 +326,7 @@ def test_r_resets_the_clock_hides_the_shells_and_clears_the_log_and_highlights()
 def test_format_arrival_reads_like_a_log_line():
     sim = simulation.Simulation([catalog.SOL, star("Proxima Centauri", 4.2465)])
     line = viewer.format_arrival(sim, simulation.Arrival(4.2465, 0, 1))
-    assert line == "y    4.2  light from Sol reaches Proxima Centauri"
+    assert line == "  4.2 yr  light from Sol reaches Proxima Centauri"
 
 
 def test_speed_text_drops_needless_decimals():

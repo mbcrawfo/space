@@ -10,12 +10,12 @@ another and wash over other stars.
 ```
 $ python -m lightspeed --within 5 --speed 2
 (a window opens; press space, and the log in its lower-left corner fills in:)
-y    0.2  light from Proxima Centauri reaches Alpha Centauri
-y    0.2  light from Alpha Centauri reaches Proxima Centauri
-y    4.2  light from Sol reaches Proxima Centauri
-y    4.2  light from Proxima Centauri reaches Sol
-y    4.4  light from Sol reaches Alpha Centauri
-y    4.4  light from Alpha Centauri reaches Sol
+  0.2 yr  light from Proxima Centauri reaches Alpha Centauri
+  0.2 yr  light from Alpha Centauri reaches Proxima Centauri
+  4.2 yr  light from Sol reaches Proxima Centauri
+  4.2 yr  light from Proxima Centauri reaches Sol
+  4.4 yr  light from Sol reaches Alpha Centauri
+  4.4 yr  light from Alpha Centauri reaches Sol
 ```
 
 ## Usage

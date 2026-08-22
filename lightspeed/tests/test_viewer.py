@@ -1,4 +1,5 @@
 import io
+import warnings
 
 import numpy as np
 import pytest
@@ -29,6 +30,7 @@ class FakePlotter:
         self.depth_peeling = False
         self.renders = 0
         self.camera_position = None
+        self.render_window = object()  # a live window; None once the plotter has been closed, as in pyvista
 
     def add_mesh(self, mesh, **kwargs):
         actor = FakeActor()
@@ -296,6 +298,36 @@ def test_run_builds_a_real_plotter_and_shows_it(monkeypatch):
     assert created["shown"]["title"] == "lightspeed"
     assert len(plotter.timers) == 1
     assert "paused" not in plotter.texts["clock"][0]  # autostart
+
+
+def test_a_tick_after_the_plotter_closes_does_nothing():
+    """VTK delivers one more timer event after `q` has torn the window down; the viewer must not
+    touch a plotter that has no render window any more, or pyvista raises from inside the callback."""
+    view, sim, plotter, clock, _ = make_viewer()
+    view.toggle()
+    view.on_tick(1)
+    calls_before = dict(plotter.text_calls)
+    plotter.render_window = None  # what pyvista's close() leaves behind
+    clock.now += 5.0
+    view.on_tick(2)
+    assert sim.time_yr == 0.0
+    assert plotter.text_calls == calls_before
+    assert all(actor.visibility is False for actor in view.shells)
+
+
+def test_a_tick_after_a_real_plotter_closes_raises_nothing():
+    """The real reproduction of the bug seen on `q`: close() then one more tick."""
+    sim = simulation.Simulation([catalog.SOL, star("A", 3.0)])
+    plotter = pyvista.Plotter(off_screen=True)
+    view = viewer.Viewer(sim, plotter, clock=FakeClock())
+    view.build()
+    view.toggle()
+    view.on_tick(1)
+    plotter.close()
+    view.clock.now += 5.0
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        view.on_tick(2)
 
 
 def test_build_works_against_a_real_off_screen_plotter():

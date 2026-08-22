@@ -181,6 +181,10 @@ class Viewer:
     # -- the frame ------------------------------------------------------------
 
     def on_tick(self, step: int) -> None:  # noqa: ARG002 - signature fixed by pyvista's timer callback
+        if self.plotter.render_window is None:
+            # VTK delivers one last timer event after `q` has closed the window, by which time
+            # pyvista has torn the renderer down; touching it now raises from inside the callback.
+            return
         now = self.clock()
         # the first frame measures from itself, not from build()
         dt = 0.0 if self._last_tick is None else max(0.0, now - self._last_tick)

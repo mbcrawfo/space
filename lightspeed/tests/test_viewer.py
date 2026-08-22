@@ -52,6 +52,7 @@ class FakePlotter:
         self.renders = 0
         self.camera_position = None
         self.render_window = FakeRenderWindow()  # None once the plotter has been closed, as in pyvista
+        self.window_size = (1280, 860)
 
     def add_mesh(self, mesh, **kwargs):
         actor = FakeActor()
@@ -249,7 +250,7 @@ def test_an_arrival_highlights_the_target_and_logs_a_line():
     assert tuple(mesh["rgb"][0]) == viewer.HIGHLIGHT_COLOR  # and Sol by A's
     assert tuple(mesh["rgb"][2]) == viewer.STAR_COLOR
     assert view.log_lines == ["  3.0 yr  light from Sol reaches A", "  3.0 yr  light from A reaches Sol"]
-    assert plotter.texts["log"][0] == "\n".join(view.log_lines)
+    assert plotter.texts["log"][0] == "\n".join(reversed(view.log_lines))
 
 
 def test_a_highlight_fades_back_after_highlight_seconds():
@@ -280,19 +281,35 @@ def test_an_arrival_tick_refreshes_the_log_text_exactly_once():
     assert plotter.text_calls["log"] == 1
 
 
-def test_the_log_keeps_only_the_last_lines():
+def test_the_log_shows_the_newest_arrival_first():
     view, _, plotter, clock = make_viewer()
     view.toggle()
     view.on_tick(1)
-    clock.now += 10.0
-    view.on_tick(2)  # all six arrivals
-    assert len(view.log_lines) == 6
-    view.log_lines.clear()
-    for i in range(viewer.LOG_LINES + 3):
+    clock.now += 4.5
+    view.on_tick(2)  # the 3.0 ly pair, then the 4.0 ly pair
+    assert view.log_lines[-1] == "  4.0 yr  light from B reaches A"
+    assert plotter.texts["log"][0].splitlines()[0] == "  4.0 yr  light from B reaches A"
+    assert plotter.texts["log"][0] == "\n".join(reversed(view.log_lines))
+
+
+def test_the_log_keeps_as_many_lines_as_fit_in_its_share_of_the_window():
+    view, _, plotter, _ = make_viewer()
+    # 30 % of an 860 px window at 35 px a line is 7 lines; a taller window holds more.
+    assert view.log_capacity() == int(viewer.LOG_HEIGHT_FRACTION * 860 / viewer.LOG_LINE_PX) == 7
+    plotter.window_size = (1280, 1720)
+    assert view.log_capacity() == 14
+    plotter.window_size = (1280, 40)
+    assert view.log_capacity() == 1  # never zero: the newest arrival always shows
+
+
+def test_the_log_drops_the_oldest_lines_beyond_its_capacity():
+    view, _, plotter, _ = make_viewer()
+    capacity = view.log_capacity()
+    for i in range(capacity + 3):
         view._log(f"line {i}")  # append-only: does not touch plotter.texts by itself
-    assert view.log_lines == [f"line {i}" for i in range(3, viewer.LOG_LINES + 3)]
+    assert view.log_lines == [f"line {i}" for i in range(3, capacity + 3)]
     view._refresh_log()
-    assert plotter.texts["log"][0] == "\n".join(view.log_lines)
+    assert plotter.texts["log"][0] == "\n".join(reversed(view.log_lines))
 
 
 def test_plus_equal_and_minus_change_the_speed_and_the_clock_text():

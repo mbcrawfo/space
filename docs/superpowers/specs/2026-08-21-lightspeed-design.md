@@ -180,9 +180,9 @@ The plotter is injected so tests can pass a recording fake; `run()` creates the 
   `scale = (r, r, r)` every tick, and `visibility = r > 0`. Depth peeling is enabled so
   overlapping translucent shells composite correctly. Background black.
 - **Text** — `add_text(..., name="clock", position="upper_left", color="white")`
-  showing `t = 12.3 yr   2 yr/s   [paused]`; `name="log"` lower-left with the last eight
-  arrival lines; `name="help"` upper-right with the key legend. Re-adding with the same
-  name replaces the actor. pyvista's default theme draws text black, so every text call
+  showing `t = 12.3 yr   2 yr/s   [paused]`; `name="log"` lower-left, newest arrival first,
+  holding as many lines as fit in `LOG_HEIGHT_FRACTION` (30 %) of the window; `name="help"`
+  upper-right with the key legend. Re-adding with the same name replaces the actor. pyvista's default theme draws text black, so every text call
   passes an explicit colour.
 - **Timer** — `add_timer_event(max_steps=sys.maxsize, duration=33, callback=self.on_tick)`.
   `on_tick` measures wall `dt` with the injected clock, calls `sim.advance(dt)`, applies

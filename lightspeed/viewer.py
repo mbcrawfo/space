@@ -32,7 +32,7 @@ from .simulation import Arrival, Simulation
 FRAME_MS = 33  # ~30 frames per second
 HIGHLIGHT_SECONDS = 1.0  # wall-clock time a reached star stays lit
 MAX_FRAME_SECONDS = 0.25  # a longer gap between frames pauses the clock rather than jumping it
-LOG_LINES = 8
+LOG_HEIGHT_FRACTION = 0.30  # the share of the window's height the arrival log may fill
 
 SOL_COLOR = (255, 220, 80)
 STAR_COLOR = (235, 235, 235)
@@ -42,6 +42,9 @@ SHELL_PALETTE = ("#4fc3f7", "#ce93d8", "#80cbc4", "#fff176", "#ffab91", "#a5d6a7
 TEXT_COLOR = "white"
 CLOCK_FONT_SIZE = 24
 OVERLAY_FONT_SIZE = 18  # the arrival log and the key legend
+# pyvista's corner text renders at about 1.93 px of line pitch per unit of font size (measured
+# offscreen at 12, 18, 24 and 36); the pitch does not change with the window's height.
+LOG_LINE_PX = round(OVERLAY_FONT_SIZE * 1.93)
 LABEL_FONT_SIZE = 15  # a star label's size when it is CAMERA_DISTANCE_LY from the camera
 LABEL_MIN_FONT_SIZE = 8
 LABEL_MAX_FONT_SIZE = 48
@@ -177,9 +180,14 @@ class Viewer:
             render=False,
         )
 
+    def log_capacity(self) -> int:
+        """How many log lines fit in the log's share of the window, at its current size — never fewer than one."""
+        _width, height = self.plotter.window_size
+        return max(1, int(LOG_HEIGHT_FRACTION * height / LOG_LINE_PX))
+
     def _refresh_log(self) -> None:
         self.plotter.add_text(
-            "\n".join(self.log_lines),
+            "\n".join(reversed(self.log_lines)),  # newest arrival on top
             position="lower_left",
             font_size=OVERLAY_FONT_SIZE,
             color=TEXT_COLOR,
@@ -193,7 +201,7 @@ class Viewer:
         # arrival, so a burst of dozens of arrivals in one frame does not force dozens of
         # renders.
         self.log_lines.append(line)
-        del self.log_lines[:-LOG_LINES]
+        del self.log_lines[: -self.log_capacity()]
 
     # -- key handlers ---------------------------------------------------------
 

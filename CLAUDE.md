@@ -225,7 +225,9 @@ supported by declaration, not by testing.
 
 `.github/workflows/ci.yml` runs on pushes to `main` and on pull requests:
 `uv sync --all-packages --locked`, then lint, format check, and tests, as a single job on
-Python 3.13.
+Python 3.13. Before installing it starts a headless display (`pyvista/setup-headless-display-action`:
+Mesa + Xvfb), because `lightspeed`'s tests build its viewer against a real off-screen
+pyvista plotter, which needs working GL.
 
 Every action is **pinned to a commit SHA** with the version tag in a trailing comment. When
 bumping an action, update both the SHA and the comment; resolve the SHA with:

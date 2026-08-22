@@ -23,6 +23,11 @@ jobs:
           python-version: "3.13"
           enable-cache: true
 
+      # lightspeed's tests build its viewer against a real off-screen pyvista Plotter, and
+      # pyvista's depth-peeling check renders once to probe the GPU — without a display and
+      # a GL library that segfaults on a bare runner. This installs Mesa and starts Xvfb.
+      - uses: pyvista/setup-headless-display-action@b0bf9f57d62d2b3fee9f1c0e0c7e390f05e97a4e # v5.0.0
+
       - name: Install dependencies
         run: uv sync --all-packages --locked
 

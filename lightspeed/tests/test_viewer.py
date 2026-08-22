@@ -30,6 +30,11 @@ class FakeRenderWindow:
                 callback(self, event)
 
 
+class FakeCamera:
+    def __init__(self):
+        self.position = (0.0, 0.0, viewer.CAMERA_DISTANCE_LY)
+
+
 class FakePlotter:
     """Records every call the Viewer makes; knows nothing about VTK."""
 
@@ -40,7 +45,8 @@ class FakePlotter:
         self.text_calls = {}  # name -> count of add_text calls for that name
         self.keys = {}  # key -> callback
         self.timers = []  # (max_steps, duration, callback)
-        self.labels = None
+        self.named_actors = {}  # name -> (actor, render) for add_actor
+        self.camera = FakeCamera()
         self.background = None
         self.depth_peeling = False
         self.renders = 0
@@ -53,8 +59,9 @@ class FakePlotter:
         self.actors.append(actor)
         return actor
 
-    def add_point_labels(self, points, labels, **kwargs):
-        self.labels = (np.asarray(points), list(labels), kwargs)
+    def add_actor(self, actor, *, name=None, render=True):
+        self.named_actors[name] = (actor, render)
+        return actor
 
     def add_text(self, text, **kwargs):
         name = kwargs["name"]
@@ -127,15 +134,51 @@ def test_build_adds_the_star_points_with_sol_in_yellow():
     assert tuple(mesh["rgb"][1]) == viewer.STAR_COLOR
 
 
+def label_actors(plotter):
+    return [actor for name, (actor, _render) in sorted(plotter.named_actors.items()) if name.startswith("label-")]
+
+
 def test_build_labels_every_star_with_name_and_distance():
+    view, sim, plotter, _ = make_viewer()
+    labels = label_actors(plotter)
+    assert [label.input for label in labels] == ["Sol (0 ly)", "A (3.0 ly)", "B (7.0 ly)"]
+    for label, position in zip(labels, sim.positions, strict=True):
+        assert label.position == pytest.approx(tuple(position))
+    assert all(
+        render is False for _actor, render in plotter.named_actors.values()
+    )  # 88 renders at build time would be slow
+    assert view.labels == labels
+
+
+def test_labels_are_base_size_at_the_reference_distance_and_grow_as_the_camera_nears():
+    view, _, plotter, clock = make_viewer()
+    # Sol sits at the focal point, CAMERA_DISTANCE_LY from the default camera: the base size exactly.
+    assert view.labels[0].size == viewer.LABEL_FONT_SIZE
+    plotter.camera.position = (0.0, 0.0, viewer.CAMERA_DISTANCE_LY / 2)
+    clock.now += 0.01
+    view.on_tick(1)
+    assert view.labels[0].size == 2 * viewer.LABEL_FONT_SIZE
+    plotter.camera.position = (0.0, 0.0, 0.5)  # right on top of Sol: clamped, not astronomical
+    view.on_tick(2)
+    assert view.labels[0].size == viewer.LABEL_MAX_FONT_SIZE
+    plotter.camera.position = (0.0, 0.0, 10 * viewer.CAMERA_DISTANCE_LY)
+    view.on_tick(3)
+    assert view.labels[0].size == viewer.LABEL_MIN_FONT_SIZE
+
+
+def test_label_sizes_follow_the_camera_even_while_paused():
+    view, _, plotter, _ = make_viewer()
+    before = view.labels[1].size
+    plotter.camera.position = tuple(p / 3 for p in plotter.camera.position)
+    view.on_tick(1)
+    assert view.labels[1].size > before
+
+
+def test_overlay_text_is_readable_from_across_the_room():
     _, _, plotter, _ = make_viewer()
-    points, labels, kwargs = plotter.labels
-    assert labels == ["Sol (0 ly)", "A (3.0 ly)", "B (7.0 ly)"]
-    assert points.shape == (3, 3)
-    assert kwargs["always_visible"] is True
-    assert kwargs["shape"] is None
-    assert kwargs["show_points"] is False
-    assert kwargs["text_color"] is not None
+    assert plotter.texts["clock"][1]["font_size"] == viewer.CLOCK_FONT_SIZE == 24
+    assert plotter.texts["log"][1]["font_size"] == viewer.OVERLAY_FONT_SIZE == 18
+    assert plotter.texts["help"][1]["font_size"] == viewer.OVERLAY_FONT_SIZE == 18
 
 
 def test_build_sets_up_the_scene_the_overlays_the_keys_and_the_timer():

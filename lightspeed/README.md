@@ -41,7 +41,8 @@ In the window:
 | drag / scroll / middle-drag | orbit / zoom / pan (VTK's trackball camera) |
 
 The upper-left corner shows the simulated clock and speed, the lower-left the last eight
-arrivals, the lower-right the key legend. VTK's
+arrivals, the upper-right the key legend. Star labels grow as the camera gets closer to
+their star and shrink as it pulls away, so the stars you are looking at read first. VTK's
 other default key bindings also remain active — `w` switches to wireframe, `s` back to
 surface, `f` flies the camera to the point under the cursor, and so on.
 

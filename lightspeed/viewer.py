@@ -40,6 +40,11 @@ HIGHLIGHT_COLOR = (255, 80, 60)
 SHELL_OPACITY = 0.07
 SHELL_PALETTE = ("#4fc3f7", "#ce93d8", "#80cbc4", "#fff176", "#ffab91", "#a5d6a7", "#90caf9", "#f48fb1")
 TEXT_COLOR = "white"
+CLOCK_FONT_SIZE = 24
+OVERLAY_FONT_SIZE = 18  # the arrival log and the key legend
+LABEL_FONT_SIZE = 15  # a star label's size when it is CAMERA_DISTANCE_LY from the camera
+LABEL_MIN_FONT_SIZE = 8
+LABEL_MAX_FONT_SIZE = 48
 CAMERA_DISTANCE_LY = 55.0
 
 HELP_TEXT = (
@@ -77,6 +82,7 @@ class Viewer:
         self.clock = clock
         self.max_frame_seconds = max_frame_seconds
         self.shells: list = []
+        self.labels: list = []
         self.log_lines: list[str] = []
         self._points: pv.PolyData | None = None
         self._base_colors: np.ndarray | None = None
@@ -93,7 +99,13 @@ class Viewer:
         self._add_stars()
         self._add_labels()
         self.plotter.add_text(
-            HELP_TEXT, position="lower_right", font_size=9, color=TEXT_COLOR, shadow=True, name="help", render=False
+            HELP_TEXT,
+            position="upper_right",  # the log owns the bottom edge; at this size the two would collide
+            font_size=OVERLAY_FONT_SIZE,
+            color=TEXT_COLOR,
+            shadow=True,
+            name="help",
+            render=False,
         )
         self._refresh_clock()
         self._refresh_log()
@@ -131,15 +143,24 @@ class Viewer:
         self.plotter.add_mesh(self._points, scalars="rgb", rgb=True, render_points_as_spheres=True, point_size=12)
 
     def _add_labels(self) -> None:
-        self.plotter.add_point_labels(
-            self.sim.positions.copy(),
-            [star.label for star in self.sim.stars],
-            shape=None,
-            show_points=False,
-            always_visible=True,
-            text_color=TEXT_COLOR,
-            font_size=10,
+        # One screen-space label per star, anchored at the star, so each can take its own font
+        # size: `_apply_label_sizes` grows a label as the camera approaches its star.
+        for index, star in enumerate(self.sim.stars):
+            label = pv.Label(star.label, position=star.position, size=LABEL_FONT_SIZE)
+            label.prop.color = TEXT_COLOR
+            self.plotter.add_actor(label, name=f"label-{index}", render=False)
+            self.labels.append(label)
+        self._apply_label_sizes()
+
+    def _apply_label_sizes(self) -> None:
+        """Size each label by its star's distance to the camera: base size at the default camera distance."""
+        distances = np.linalg.norm(self.sim.positions - np.asarray(self.plotter.camera.position, dtype=float), axis=1)
+        sizes = np.clip(
+            LABEL_FONT_SIZE * CAMERA_DISTANCE_LY / np.maximum(distances, 1e-9), LABEL_MIN_FONT_SIZE, LABEL_MAX_FONT_SIZE
         )
+        for label, size in zip(self.labels, sizes.round().astype(int), strict=True):
+            if label.size != size:  # changing the size re-rasterises the text; skip when it would be a no-op
+                label.size = int(size)
 
     # -- overlays -------------------------------------------------------------
 
@@ -147,14 +168,20 @@ class Viewer:
         state = "" if self.sim.running else "   [paused — press space]"
         text = f"t = {self.sim.time_yr:,.1f} yr   {format_speed(self.sim.years_per_second)}{state}"
         self.plotter.add_text(
-            text, position="upper_left", font_size=12, color=TEXT_COLOR, shadow=True, name="clock", render=False
+            text,
+            position="upper_left",
+            font_size=CLOCK_FONT_SIZE,
+            color=TEXT_COLOR,
+            shadow=True,
+            name="clock",
+            render=False,
         )
 
     def _refresh_log(self) -> None:
         self.plotter.add_text(
             "\n".join(self.log_lines),
             position="lower_left",
-            font_size=9,
+            font_size=OVERLAY_FONT_SIZE,
             color=TEXT_COLOR,
             shadow=True,
             name="log",
@@ -226,6 +253,7 @@ class Viewer:
         if self.sim.running:
             self._apply_radius()
             self._refresh_clock()
+        self._apply_label_sizes()  # the camera may have moved, running or not
         # No self.plotter.render() here: pyvista's Timer.execute renders the window right
         # after this callback returns (every FRAME_MS, even while paused), so rendering
         # again here would be a second full render per frame.

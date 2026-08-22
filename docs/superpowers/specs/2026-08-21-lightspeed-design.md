@@ -171,15 +171,17 @@ The plotter is injected so tests can pass a recording fake; `run()` creates the 
   notes the wall time; rows revert after `HIGHLIGHT_SECONDS = 1.0` of wall time.
   Mutating the array in place followed by `plotter.render()` is sufficient (verified
   against pyvista 0.48 / VTK 9.6).
-- **Labels** — `add_point_labels(positions, labels, shape=None, show_points=False,
-  always_visible=True, text_color="white", font_size=10)`.
+- **Labels** — one `pyvista.Label` (screen-space text anchored at a 3D point, never
+  occluded) per star, added with `add_actor(render=False)`. Each frame its font size is
+  `LABEL_FONT_SIZE × CAMERA_DISTANCE_LY / distance-to-camera`, clamped to
+  `[LABEL_MIN_FONT_SIZE, LABEL_MAX_FONT_SIZE]`, so labels grow as the camera nears them.
 - **Shells** — one unit `pyvista.Sphere(radius=1.0)` per star via `add_mesh(opacity=0.12,
   color=<palette[i % len(palette)]>)`; the returned actor gets `position = star position`,
   `scale = (r, r, r)` every tick, and `visibility = r > 0`. Depth peeling is enabled so
   overlapping translucent shells composite correctly. Background black.
 - **Text** — `add_text(..., name="clock", position="upper_left", color="white")`
   showing `t = 12.3 yr   2 yr/s   [paused]`; `name="log"` lower-left with the last eight
-  arrival lines; `name="help"` lower-right with the key legend. Re-adding with the same
+  arrival lines; `name="help"` upper-right with the key legend. Re-adding with the same
   name replaces the actor. pyvista's default theme draws text black, so every text call
   passes an explicit colour.
 - **Timer** — `add_timer_event(max_steps=sys.maxsize, duration=33, callback=self.on_tick)`.

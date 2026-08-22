@@ -74,6 +74,7 @@ class Viewer:
         self._base_colors: np.ndarray | None = None
         self._lit_until: np.ndarray = np.zeros(len(sim.stars))  # wall time each highlight expires; 0 = unlit
         self._last_tick: float | None = None
+        self._stopped = False
 
     # -- building the scene -------------------------------------------------
 
@@ -180,10 +181,16 @@ class Viewer:
 
     # -- the frame ------------------------------------------------------------
 
+    def stop(self) -> None:
+        """Make every later tick a no-op; `run()` calls this the moment the window starts closing."""
+        self._stopped = True
+
     def on_tick(self, step: int) -> None:  # noqa: ARG002 - signature fixed by pyvista's timer callback
-        if self.plotter.render_window is None:
-            # VTK delivers one last timer event after `q` has closed the window, by which time
-            # pyvista has torn the renderer down; touching it now raises from inside the callback.
+        if self._stopped or self.plotter.render_window is None:
+            # VTK still delivers timer events while `q` is closing the window, and pyvista tears
+            # the renderer down before the render window goes away; touching either raises from
+            # inside the callback. `stop()` is wired to pyvista's before_close_callback, which
+            # fires before any of that; the render-window check covers a plotter closed directly.
             return
         now = self.clock()
         # the first frame measures from itself, not from build()
@@ -231,5 +238,6 @@ def run(stars: Sequence[Star], *, years_per_second: float, autostart: bool) -> N
     if autostart:
         sim.start()
     plotter = pv.Plotter(window_size=(1280, 860))
-    Viewer(sim, plotter).build()
-    plotter.show(title="lightspeed")
+    view = Viewer(sim, plotter)
+    view.build()
+    plotter.show(title="lightspeed", before_close_callback=lambda _plotter: view.stop())

@@ -296,6 +296,11 @@ def test_run_builds_a_real_plotter_and_shows_it(monkeypatch):
     viewer.run([catalog.SOL, star("A", 3.0)], years_per_second=2.0, autostart=True)
     plotter = created["plotter"]
     assert created["shown"]["title"] == "lightspeed"
+    before_close = created["shown"]["before_close_callback"]
+    before_close(plotter)  # what pyvista calls first when the window closes
+    clock_calls = dict(plotter.text_calls)
+    plotter.timers[0][2](99)  # the straggler tick VTK still delivers
+    assert plotter.text_calls == clock_calls
     assert len(plotter.timers) == 1
     assert "paused" not in plotter.texts["clock"][0]  # autostart
 
@@ -313,6 +318,20 @@ def test_a_tick_after_the_plotter_closes_does_nothing():
     assert sim.time_yr == 0.0
     assert plotter.text_calls == calls_before
     assert all(actor.visibility is False for actor in view.shells)
+
+
+def test_stop_makes_every_later_tick_a_no_op():
+    """`run()` wires stop() to pyvista's before_close_callback, which fires before close() tears the
+    renderer down — earlier than the render window disappears, which is too late on macOS."""
+    view, sim, plotter, clock, _ = make_viewer()
+    view.toggle()
+    view.on_tick(1)
+    calls_before = dict(plotter.text_calls)
+    view.stop()
+    clock.now += 5.0
+    view.on_tick(2)
+    assert sim.time_yr == 0.0
+    assert plotter.text_calls == calls_before
 
 
 def test_a_tick_after_a_real_plotter_closes_raises_nothing():

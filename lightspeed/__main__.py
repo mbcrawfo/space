@@ -22,8 +22,9 @@ each at its true position relative to Earth and labelled with its name and dista
 scene unit is one light-year, so the layout is accurate and only the camera scales it.
 Press space and every star emits a single flash at the same instant; each flash grows as
 a translucent sphere at one light-year per year of simulated time. When two stars' light
-reaches each other — both crossings happen at the same instant — both flash red and a
-log line records the pair and the year. The window stays open until you close it (q)."""
+reaches each other — both crossings happen at the same instant — both flash red and
+a log line records the pair and the year. The window stays open until you close it
+(q)."""
 
 EXAMPLES = """\
 Examples:

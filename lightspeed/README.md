@@ -10,12 +10,9 @@ another and wash over other stars.
 ```
 $ python -m lightspeed --within 5 --speed 2
 (a window opens; press space, and the log in its lower-left corner fills in:)
-  0.2 yr  Proxima Centauri → Alpha Centauri
-  0.2 yr  Alpha Centauri → Proxima Centauri
-  4.2 yr  Sol → Proxima Centauri
-  4.2 yr  Proxima Centauri → Sol
-  4.4 yr  Sol → Alpha Centauri
-  4.4 yr  Alpha Centauri → Sol
+  0.2 yr  Proxima Centauri ↔ Alpha Centauri
+  4.2 yr  Sol ↔ Proxima Centauri
+  4.4 yr  Sol ↔ Alpha Centauri
 ```
 
 ## Usage

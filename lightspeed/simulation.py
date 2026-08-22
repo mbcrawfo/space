@@ -4,8 +4,9 @@ Pure state over numpy, with no knowledge of how it is drawn. The viewer owns a
 `Simulation`, feeds it wall-clock seconds, and asks for the shell radius and for the
 arrivals that fell inside each step. Because every star emits at the same instant and
 light goes one light-year per year, the shell radius is simply the clock, and the
-wavefront from star i reaches star j at exactly their separation in light-years — so the
-whole arrival schedule is the sorted list of pairwise distances, worked out once.
+wavefront from star i reaches star j at exactly their separation in light-years — and j's
+reaches i at the same instant — so the whole arrival schedule is the sorted list of
+pairwise distances, one entry per pair, worked out once.
 """
 
 import math
@@ -22,11 +23,15 @@ MAX_SPEED = 4096.0
 
 @dataclass(frozen=True)
 class Arrival:
-    """The moment the wavefront from star `source` sweeps over star `target`."""
+    """The moment the wavefronts of stars `a` and `b` reach each other's star.
+
+    Both crossings happen at the same instant — the two stars are the same distance apart
+    either way — so one arrival stands for the pair. `a < b`, indices into the star list.
+    """
 
     time_yr: float
-    source: int
-    target: int
+    a: int
+    b: int
 
 
 def _check_speed(years_per_second: float) -> float:
@@ -50,10 +55,10 @@ class Simulation:
         if n < 2:
             return []
         separations = np.linalg.norm(self.positions[:, None, :] - self.positions[None, :, :], axis=2)
-        sources, targets = np.nonzero(~np.eye(n, dtype=bool))
-        times = separations[sources, targets]
-        order = np.lexsort((targets, sources, times))  # by time, then source, then target
-        return [Arrival(float(times[k]), int(sources[k]), int(targets[k])) for k in order]
+        first, second = np.triu_indices(n, k=1)  # each unordered pair once, lower index first
+        times = separations[first, second]
+        order = np.lexsort((second, first, times))  # by time, then a, then b
+        return [Arrival(float(times[k]), int(first[k]), int(second[k])) for k in order]
 
     def start(self) -> None:
         self.running = True

@@ -246,7 +246,7 @@ def test_the_first_tick_after_build_does_not_jump_the_clock():
     assert sim.time_yr == pytest.approx(1.0)
 
 
-def test_an_arrival_highlights_the_target_and_logs_a_line():
+def test_an_arrival_highlights_both_stars_and_logs_one_line():
     view, _, plotter, clock = make_viewer()
     view.toggle()
     view.on_tick(1)
@@ -256,7 +256,7 @@ def test_an_arrival_highlights_the_target_and_logs_a_line():
     assert tuple(mesh["rgb"][1]) == viewer.HIGHLIGHT_COLOR  # A was reached by Sol's light
     assert tuple(mesh["rgb"][0]) == viewer.HIGHLIGHT_COLOR  # and Sol by A's
     assert tuple(mesh["rgb"][2]) == viewer.STAR_COLOR
-    assert view.log_lines == ["  3.0 yr  Sol → A", "  3.0 yr  A → Sol"]
+    assert view.log_lines == ["  3.0 yr  Sol ↔ A"]
     assert plotter.texts["log"][0] == "\n".join(reversed(view.log_lines))
 
 
@@ -282,9 +282,9 @@ def test_an_arrival_tick_refreshes_the_log_text_exactly_once():
     view.toggle()
     view.on_tick(1)  # primes the frame clock, no arrivals yet
     plotter.text_calls.clear()
-    clock.now += 10.0  # far enough for all six arrivals to land in this one tick
+    clock.now += 10.0  # far enough for all three pair arrivals to land in this one tick
     view.on_tick(2)
-    assert len(view.log_lines) == 6
+    assert len(view.log_lines) == 3
     assert plotter.text_calls["log"] == 1
 
 
@@ -294,8 +294,8 @@ def test_the_log_shows_the_newest_arrival_first():
     view.on_tick(1)
     clock.now += 4.5
     view.on_tick(2)  # the 3.0 ly pair, then the 4.0 ly pair
-    assert view.log_lines[-1] == "  4.0 yr  B → A"
-    assert plotter.texts["log"][0].splitlines()[0] == "  4.0 yr  B → A"
+    assert view.log_lines[-1] == "  4.0 yr  A ↔ B"
+    assert plotter.texts["log"][0].splitlines()[0] == "  4.0 yr  A ↔ B"
     assert plotter.texts["log"][0] == "\n".join(reversed(view.log_lines))
 
 
@@ -350,7 +350,7 @@ def test_r_resets_the_clock_hides_the_shells_and_clears_the_log_and_highlights()
 def test_format_arrival_reads_like_a_log_line():
     sim = simulation.Simulation([catalog.SOL, star("Proxima Centauri", 4.2465)])
     line = viewer.format_arrival(sim, simulation.Arrival(4.2465, 0, 1))
-    assert line == "  4.2 yr  Sol → Proxima Centauri"
+    assert line == "  4.2 yr  Sol ↔ Proxima Centauri"
 
 
 def test_speed_text_drops_needless_decimals():

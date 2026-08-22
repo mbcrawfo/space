@@ -27,10 +27,10 @@ def test_positions_are_an_n_by_three_array_in_star_order():
     assert sim.positions[2] == pytest.approx([7.0, 0.0, 0.0])
 
 
-def test_arrivals_are_every_ordered_pair_sorted_by_distance():
+def test_arrivals_are_every_pair_once_sorted_by_distance():
     sim = simulation.Simulation(line_of_three())
-    schedule = [(round(a.time_yr, 9), a.source, a.target) for a in sim.arrivals]
-    assert schedule == [(3.0, 0, 1), (3.0, 1, 0), (4.0, 1, 2), (4.0, 2, 1), (7.0, 0, 2), (7.0, 2, 0)]
+    schedule = [(round(arrival.time_yr, 9), arrival.a, arrival.b) for arrival in sim.arrivals]
+    assert schedule == [(3.0, 0, 1), (4.0, 1, 2), (7.0, 0, 2)]
 
 
 def test_it_starts_paused_at_time_zero():
@@ -59,16 +59,16 @@ def test_advance_returns_exactly_the_arrivals_in_the_step():
     sim.start()
     assert sim.advance(2.9) == []
     first = sim.advance(0.2)  # now 3.1: the two 3.0 ly arrivals
-    assert [(a.source, a.target) for a in first] == [(0, 1), (1, 0)]
+    assert [(arrival.a, arrival.b) for arrival in first] == [(0, 1)]
     second = sim.advance(4.0)  # now 7.1: the 4.0 and 7.0 arrivals
-    assert [(a.source, a.target) for a in second] == [(1, 2), (2, 1), (0, 2), (2, 0)]
+    assert [(arrival.a, arrival.b) for arrival in second] == [(1, 2), (0, 2)]
     assert sim.advance(100.0) == []
 
 
 def test_an_arrival_exactly_at_the_new_time_counts():
     sim = simulation.Simulation(line_of_three())
     sim.start()
-    assert [(a.source, a.target) for a in sim.advance(3.0)] == [(0, 1), (1, 0)]
+    assert [(arrival.a, arrival.b) for arrival in sim.advance(3.0)] == [(0, 1)]
 
 
 def test_reset_rewinds_the_clock_and_the_schedule_and_pauses():
@@ -79,7 +79,7 @@ def test_reset_rewinds_the_clock_and_the_schedule_and_pauses():
     assert sim.time_yr == 0.0
     assert sim.running is False
     sim.start()
-    assert [(a.source, a.target) for a in sim.advance(3.5)] == [(0, 1), (1, 0)]
+    assert [(arrival.a, arrival.b) for arrival in sim.advance(3.5)] == [(0, 1)]
 
 
 def test_toggle_flips_running():
@@ -130,19 +130,19 @@ def test_arrival_times_match_the_real_catalogue_pairwise_distances():
     stars = catalog.load()[:10]
     sim = simulation.Simulation(stars)
     for arrival in sim.arrivals:
-        expected = np.linalg.norm(sim.positions[arrival.source] - sim.positions[arrival.target])
+        expected = np.linalg.norm(sim.positions[arrival.a] - sim.positions[arrival.b])
         assert arrival.time_yr == pytest.approx(expected)
 
 
-def test_equal_arrival_times_across_distinct_pairs_sort_by_source_then_target():
+def test_equal_arrival_times_across_distinct_pairs_sort_by_the_lower_index_then_the_higher():
     # Sol at the origin, A at (3, 0, 0), B at (0, 3, 0): Sol-A and Sol-B are both exactly
     # 3 ly, so the four arrivals they produce tie on time_yr and must break the tie by
-    # (source, target) rather than by whichever pair happened to be computed first.
+    # (a, b) rather than by whichever pair happened to be computed first.
     sim = simulation.Simulation([catalog.SOL, star("A", 3.0, 0.0, 0.0), star("B", 0.0, 3.0, 0.0)])
-    schedule = [(round(a.time_yr, 9), a.source, a.target) for a in sim.arrivals]
-    assert schedule[:4] == [(3.0, 0, 1), (3.0, 0, 2), (3.0, 1, 0), (3.0, 2, 0)]
+    schedule = [(round(arrival.time_yr, 9), arrival.a, arrival.b) for arrival in sim.arrivals]
+    assert schedule[:2] == [(3.0, 0, 1), (3.0, 0, 2)]
     a_to_b = math.hypot(3.0, 3.0)
-    assert schedule[4:] == [(round(a_to_b, 9), 1, 2), (round(a_to_b, 9), 2, 1)]
+    assert schedule[2:] == [(round(a_to_b, 9), 1, 2)]
 
 
 def test_advance_zero_while_running_returns_nothing_and_does_not_move_the_clock():

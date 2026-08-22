@@ -42,7 +42,7 @@ HIGHLIGHT_COLOR = (255, 80, 60)
 SHELL_OPACITY = 0.07
 SHELL_PALETTE = ("#4fc3f7", "#ce93d8", "#80cbc4", "#fff176", "#ffab91", "#a5d6a7", "#90caf9", "#f48fb1")
 TEXT_COLOR = "white"
-# VTK's embedded fonts stop at Latin-1, so the log's "→" needs a fuller face. matplotlib — a
+# VTK's embedded fonts stop at Latin-1, so the log's "↔" needs a fuller face. matplotlib — a
 # pyvista dependency, so always installed — ships DejaVu Sans; the overlays use it. If it is
 # ever missing, VTK's own font is used and the arrow renders as a blank.
 _DEJAVU = os.path.join(matplotlib.get_data_path(), "fonts", "ttf", "DejaVuSans.ttf")
@@ -73,9 +73,7 @@ def format_speed(years_per_second: float) -> str:
 
 
 def format_arrival(sim: Simulation, arrival: Arrival) -> str:
-    source = sim.stars[arrival.source].name
-    target = sim.stars[arrival.target].name
-    return f"{arrival.time_yr:5.1f} yr  {source} → {target}"
+    return f"{arrival.time_yr:5.1f} yr  {sim.stars[arrival.a].name} ↔ {sim.stars[arrival.b].name}"
 
 
 class Viewer:
@@ -262,7 +260,7 @@ class Viewer:
 
         arrivals = self.sim.advance(dt)
         for arrival in arrivals:
-            self._lit_until[arrival.target] = now + HIGHLIGHT_SECONDS
+            self._lit_until[[arrival.a, arrival.b]] = now + HIGHLIGHT_SECONDS  # both stars are reached at once
             self._log(format_arrival(self.sim, arrival))
         if arrivals:
             self._refresh_log()

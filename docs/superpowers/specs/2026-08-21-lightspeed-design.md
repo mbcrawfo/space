@@ -19,12 +19,9 @@ It is pure Python on the desktop — a VTK window driven through PyVista — not
 ```
 $ python -m lightspeed --within 5 --speed 2
 (a window opens; press space, and the log in its lower-left corner fills in:)
-  0.2 yr  Proxima Centauri → Alpha Centauri
-  0.2 yr  Alpha Centauri → Proxima Centauri
-  4.2 yr  Sol → Proxima Centauri
-  4.2 yr  Proxima Centauri → Sol
-  4.4 yr  Sol → Alpha Centauri
-  4.4 yr  Alpha Centauri → Sol
+  0.2 yr  Proxima Centauri ↔ Alpha Centauri
+  4.2 yr  Sol ↔ Proxima Centauri
+  4.4 yr  Sol ↔ Alpha Centauri
 ```
 
 Decisions made during brainstorming, in one place:
@@ -126,8 +123,8 @@ Pure state over numpy; no VTK.
 @dataclass(frozen=True)
 class Arrival:
     time_yr: float
-    source: int        # index into the star list
-    target: int
+    a: int             # indices into the star list, a < b: both are reached at once
+    b: int
 
 class Simulation:
     def __init__(self, stars: Sequence[Star], *, years_per_second: float = 1.0)
@@ -146,7 +143,7 @@ class Simulation:
 `advance()` does nothing and returns `[]` while paused. When running it adds
 `wall_dt_s × years_per_second` to the clock and returns, in time order, every precomputed
 `Arrival` whose `time_yr` lies in `(previous, now]`. Arrivals are precomputed in
-`__init__` as all ordered pairs `i ≠ j` with `time_yr = |p_i − p_j|`, sorted; a cursor
+`__init__` as every unordered pair `i < j` with `time_yr = |p_i − p_j|`, sorted; a cursor
 walks them and `reset()` rewinds it. A negative or non-finite `wall_dt_s` raises
 `ValueError`.
 

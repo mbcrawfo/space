@@ -1,4 +1,5 @@
 import io
+import math
 import warnings
 
 import numpy as np
@@ -13,6 +14,21 @@ class FakeActor:
         self.position = (0.0, 0.0, 0.0)
         self.scale = (1.0, 1.0, 1.0)
         self.visibility = True
+
+
+class FakeRenderWindow:
+    """Stands in for vtkRenderWindow: records observers so a test can fire a render."""
+
+    def __init__(self):
+        self.observers = []  # (event, callback)
+
+    def AddObserver(self, event, callback):  # noqa: N802 - VTK's spelling
+        self.observers.append((event, callback))
+
+    def fire(self, event):
+        for name, callback in self.observers:
+            if name == event:
+                callback(self, event)
 
 
 class FakePlotter:
@@ -30,7 +46,7 @@ class FakePlotter:
         self.depth_peeling = False
         self.renders = 0
         self.camera_position = None
-        self.render_window = object()  # a live window; None once the plotter has been closed, as in pyvista
+        self.render_window = FakeRenderWindow()  # None once the plotter has been closed, as in pyvista
 
     def add_mesh(self, mesh, **kwargs):
         actor = FakeActor()
@@ -79,7 +95,8 @@ def make_viewer(speed=1.0):
     plotter = FakePlotter()
     clock = FakeClock()
     out = io.StringIO()
-    view = viewer.Viewer(sim, plotter, clock=clock, out=out)
+    # Tests jump the fake clock by whole seconds; the per-frame cap is tested on its own below.
+    view = viewer.Viewer(sim, plotter, clock=clock, out=out, max_frame_seconds=math.inf)
     view.build()
     return view, sim, plotter, clock, out
 
@@ -318,6 +335,38 @@ def test_a_tick_after_the_plotter_closes_does_nothing():
     assert sim.time_yr == 0.0
     assert plotter.text_calls == calls_before
     assert all(actor.visibility is False for actor in view.shells)
+
+
+def test_build_advances_the_frame_before_every_render_too():
+    """On macOS VTK's timers do not fire while the mouse button is held, but the trackball renders on
+    every mouse move; hooking the render window's StartEvent keeps the shells growing mid-drag."""
+    view, sim, plotter, clock, _ = make_viewer()
+    events = [name for name, _ in plotter.render_window.observers]
+    assert events == ["StartEvent"]
+    view.toggle()
+    view.on_tick(1)
+    clock.now += 0.1
+    plotter.render_window.fire("StartEvent")
+    assert sim.time_yr == pytest.approx(0.1)
+    assert view.shells[0].scale == pytest.approx((0.1, 0.1, 0.1))
+
+
+def test_a_long_gap_between_frames_pauses_the_clock_instead_of_jumping_it():
+    """A drag with the mouse held still, or a hidden window, produces no frames; when they resume the
+    simulation must not leap ahead by the whole gap."""
+    sim = simulation.Simulation([catalog.SOL, star("A", 3.0)], years_per_second=2.0)
+    plotter = FakePlotter()
+    clock = FakeClock()
+    view = viewer.Viewer(sim, plotter, clock=clock)  # the default cap
+    view.build()
+    view.toggle()
+    view.on_tick(1)
+    clock.now += 5.0
+    view.on_tick(2)
+    assert sim.time_yr == pytest.approx(2.0 * viewer.MAX_FRAME_SECONDS)
+    clock.now += 0.1
+    view.on_tick(3)
+    assert sim.time_yr == pytest.approx(2.0 * viewer.MAX_FRAME_SECONDS + 0.2)
 
 
 def test_stop_makes_every_later_tick_a_no_op():

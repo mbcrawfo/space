@@ -63,7 +63,11 @@ At simulated time `t` the flash from a star at **p** is the sphere of radius `t`
 `t = |p − q|`, so the arrival schedule is the sorted list of pairwise separations,
 computed once. Each frame the viewer advances the clock by the real time elapsed times
 `--speed`, rescales every shell to the new radius, lights up any star a shell has just
-reached, and appends the arrival to the log.
+reached, and appends the arrival to the log. A frame is drawn on a timer and before every
+render — including the renders the camera makes while you drag, so the shells keep growing
+as you orbit — and a single frame never advances the clock by more than a quarter of a
+second of real time, so a stall (a hidden window, a mouse held still) pauses the simulation
+rather than making it leap.
 
 ## Exit codes
 

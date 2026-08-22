@@ -31,6 +31,7 @@ from .simulation import Arrival, Simulation
 
 FRAME_MS = 33  # ~30 frames per second
 HIGHLIGHT_SECONDS = 1.0  # wall-clock time a reached star stays lit
+MAX_FRAME_SECONDS = 0.25  # a longer gap between frames pauses the clock rather than jumping it
 LOG_LINES = 8
 
 SOL_COLOR = (255, 220, 80)
@@ -63,10 +64,19 @@ def format_arrival(sim: Simulation, arrival: Arrival) -> str:
 
 
 class Viewer:
-    def __init__(self, sim: Simulation, plotter, *, clock: Callable[[], float] = time.perf_counter, out=None):
+    def __init__(
+        self,
+        sim: Simulation,
+        plotter,
+        *,
+        clock: Callable[[], float] = time.perf_counter,
+        out=None,
+        max_frame_seconds: float = MAX_FRAME_SECONDS,
+    ):
         self.sim = sim
         self.plotter = plotter
         self.clock = clock
+        self.max_frame_seconds = max_frame_seconds
         self.out = sys.stdout if out is None else out
         self.shells: list = []
         self.log_lines: list[str] = []
@@ -95,6 +105,10 @@ class Viewer:
         self.plotter.add_key_event("minus", self.slower)
         self.plotter.add_key_event("r", self.reset)
         self.plotter.add_timer_event(max_steps=sys.maxsize, duration=FRAME_MS, callback=self.on_tick)
+        # On macOS, VTK's timers do not fire while a mouse button is held, but the trackball camera
+        # renders on every mouse move; advancing the frame at the start of every render keeps the
+        # shells growing while the user orbits, instead of freezing and then leaping on release.
+        self.plotter.render_window.AddObserver("StartEvent", self.on_render)
         eye = np.array([0.55, -0.65, 0.5])
         eye = tuple(eye / np.linalg.norm(eye) * CAMERA_DISTANCE_LY)
         self.plotter.camera_position = [eye, (0.0, 0.0, 0.0), (0.0, 0.0, 1.0)]
@@ -185,6 +199,10 @@ class Viewer:
         """Make every later tick a no-op; `run()` calls this the moment the window starts closing."""
         self._stopped = True
 
+    def on_render(self, *_args) -> None:
+        """Render-window StartEvent observer: the frame also advances right before any render."""
+        self.on_tick(0)
+
     def on_tick(self, step: int) -> None:  # noqa: ARG002 - signature fixed by pyvista's timer callback
         if self._stopped or self.plotter.render_window is None:
             # VTK still delivers timer events while `q` is closing the window, and pyvista tears
@@ -194,7 +212,9 @@ class Viewer:
             return
         now = self.clock()
         # the first frame measures from itself, not from build()
-        dt = 0.0 if self._last_tick is None else max(0.0, now - self._last_tick)
+        # A gap longer than the cap — a drag with the mouse held still, a hidden window — means no
+        # frames were drawn; the clock pauses for it rather than leaping ahead in one step.
+        dt = 0.0 if self._last_tick is None else min(max(0.0, now - self._last_tick), self.max_frame_seconds)
         self._last_tick = now
 
         arrivals = self.sim.advance(dt)

@@ -3,7 +3,7 @@ name = "lightspeed"
 version = "0.1.0"
 description = "Watch light spread between the nearest stars, in 3D"
 requires-python = ">=3.10"
-dependencies = ["numpy>=1.26", "pyvista>=0.44"]
+dependencies = ["matplotlib>=3.8", "numpy>=1.26", "pyvista>=0.44"]
 
 [tool.uv]
 package = false

@@ -19,10 +19,12 @@ with `render=False` for the same reason: `add_text`'s default is to render immed
 and text changes only need to appear by the next timer-driven render, not sooner.
 """
 
+import os
 import sys
 import time
 from collections.abc import Callable, Sequence
 
+import matplotlib
 import numpy as np
 import pyvista as pv
 
@@ -40,11 +42,16 @@ HIGHLIGHT_COLOR = (255, 80, 60)
 SHELL_OPACITY = 0.07
 SHELL_PALETTE = ("#4fc3f7", "#ce93d8", "#80cbc4", "#fff176", "#ffab91", "#a5d6a7", "#90caf9", "#f48fb1")
 TEXT_COLOR = "white"
+# VTK's embedded fonts stop at Latin-1, so the log's "→" needs a fuller face. matplotlib — a
+# pyvista dependency, so always installed — ships DejaVu Sans; the overlays use it. If it is
+# ever missing, VTK's own font is used and the arrow renders as a blank.
+_DEJAVU = os.path.join(matplotlib.get_data_path(), "fonts", "ttf", "DejaVuSans.ttf")
+OVERLAY_FONT_FILE = _DEJAVU if os.path.exists(_DEJAVU) else None
 CLOCK_FONT_SIZE = 24
 OVERLAY_FONT_SIZE = 18  # the arrival log and the key legend
-# pyvista's corner text renders at about 1.93 px of line pitch per unit of font size (measured
-# offscreen at 12, 18, 24 and 36); the pitch does not change with the window's height.
-LOG_LINE_PX = round(OVERLAY_FONT_SIZE * 1.93)
+# pyvista's corner text in DejaVu Sans renders at about 2.27 px of line pitch per unit of font
+# size (measured offscreen at 12, 18 and 24); the pitch does not change with the window's height.
+LOG_LINE_PX = round(OVERLAY_FONT_SIZE * 2.27)
 LABEL_FONT_SIZE = 15  # a star label's size when it is CAMERA_DISTANCE_LY from the camera
 LABEL_MIN_FONT_SIZE = 8
 LABEL_MAX_FONT_SIZE = 48
@@ -68,7 +75,7 @@ def format_speed(years_per_second: float) -> str:
 def format_arrival(sim: Simulation, arrival: Arrival) -> str:
     source = sim.stars[arrival.source].name
     target = sim.stars[arrival.target].name
-    return f"{arrival.time_yr:5.1f} yr  light from {source} reaches {target}"
+    return f"{arrival.time_yr:5.1f} yr  {source} → {target}"
 
 
 class Viewer:
@@ -107,6 +114,7 @@ class Viewer:
             font_size=OVERLAY_FONT_SIZE,
             color=TEXT_COLOR,
             shadow=True,
+            font_file=OVERLAY_FONT_FILE,
             name="help",
             render=False,
         )
@@ -176,6 +184,7 @@ class Viewer:
             font_size=CLOCK_FONT_SIZE,
             color=TEXT_COLOR,
             shadow=True,
+            font_file=OVERLAY_FONT_FILE,
             name="clock",
             render=False,
         )
@@ -192,6 +201,7 @@ class Viewer:
             font_size=OVERLAY_FONT_SIZE,
             color=TEXT_COLOR,
             shadow=True,
+            font_file=OVERLAY_FONT_FILE,
             name="log",
             render=False,
         )

@@ -175,6 +175,13 @@ def test_label_sizes_follow_the_camera_even_while_paused():
     assert view.labels[1].size > before
 
 
+def test_overlay_text_uses_a_font_that_has_the_arrow():
+    _, _, plotter, _ = make_viewer()
+    assert viewer.OVERLAY_FONT_FILE is not None and viewer.OVERLAY_FONT_FILE.endswith("DejaVuSans.ttf")
+    for name in ("clock", "log", "help"):
+        assert plotter.texts[name][1]["font_file"] == viewer.OVERLAY_FONT_FILE
+
+
 def test_overlay_text_is_readable_from_across_the_room():
     _, _, plotter, _ = make_viewer()
     assert plotter.texts["clock"][1]["font_size"] == viewer.CLOCK_FONT_SIZE == 24
@@ -249,7 +256,7 @@ def test_an_arrival_highlights_the_target_and_logs_a_line():
     assert tuple(mesh["rgb"][1]) == viewer.HIGHLIGHT_COLOR  # A was reached by Sol's light
     assert tuple(mesh["rgb"][0]) == viewer.HIGHLIGHT_COLOR  # and Sol by A's
     assert tuple(mesh["rgb"][2]) == viewer.STAR_COLOR
-    assert view.log_lines == ["  3.0 yr  light from Sol reaches A", "  3.0 yr  light from A reaches Sol"]
+    assert view.log_lines == ["  3.0 yr  Sol → A", "  3.0 yr  A → Sol"]
     assert plotter.texts["log"][0] == "\n".join(reversed(view.log_lines))
 
 
@@ -287,17 +294,17 @@ def test_the_log_shows_the_newest_arrival_first():
     view.on_tick(1)
     clock.now += 4.5
     view.on_tick(2)  # the 3.0 ly pair, then the 4.0 ly pair
-    assert view.log_lines[-1] == "  4.0 yr  light from B reaches A"
-    assert plotter.texts["log"][0].splitlines()[0] == "  4.0 yr  light from B reaches A"
+    assert view.log_lines[-1] == "  4.0 yr  B → A"
+    assert plotter.texts["log"][0].splitlines()[0] == "  4.0 yr  B → A"
     assert plotter.texts["log"][0] == "\n".join(reversed(view.log_lines))
 
 
 def test_the_log_keeps_as_many_lines_as_fit_in_its_share_of_the_window():
     view, _, plotter, _ = make_viewer()
-    # 30 % of an 860 px window at 35 px a line is 7 lines; a taller window holds more.
-    assert view.log_capacity() == int(viewer.LOG_HEIGHT_FRACTION * 860 / viewer.LOG_LINE_PX) == 7
+    # 30 % of an 860 px window at 41 px a line is 6 lines; a taller window holds more.
+    assert view.log_capacity() == int(viewer.LOG_HEIGHT_FRACTION * 860 / viewer.LOG_LINE_PX) == 6
     plotter.window_size = (1280, 1720)
-    assert view.log_capacity() == 14
+    assert view.log_capacity() == 12
     plotter.window_size = (1280, 40)
     assert view.log_capacity() == 1  # never zero: the newest arrival always shows
 
@@ -343,7 +350,7 @@ def test_r_resets_the_clock_hides_the_shells_and_clears_the_log_and_highlights()
 def test_format_arrival_reads_like_a_log_line():
     sim = simulation.Simulation([catalog.SOL, star("Proxima Centauri", 4.2465)])
     line = viewer.format_arrival(sim, simulation.Arrival(4.2465, 0, 1))
-    assert line == "  4.2 yr  light from Sol reaches Proxima Centauri"
+    assert line == "  4.2 yr  Sol → Proxima Centauri"
 
 
 def test_speed_text_drops_needless_decimals():

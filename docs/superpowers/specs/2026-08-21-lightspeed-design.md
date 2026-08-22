@@ -172,10 +172,17 @@ The plotter is injected so tests can pass a recording fake; `run()` creates the 
   occluded) per star, added with `add_actor(render=False)`. Each frame its font size is
   `LABEL_FONT_SIZE × CAMERA_DISTANCE_LY / distance-to-camera`, clamped to
   `[LABEL_MIN_FONT_SIZE, LABEL_MAX_FONT_SIZE]`, so labels grow as the camera nears them.
-- **Shells** — one unit `pyvista.Sphere(radius=1.0)` per star via `add_mesh(opacity=0.12,
-  color=<palette[i % len(palette)]>)`; the returned actor gets `position = star position`,
-  `scale = (r, r, r)` every tick, and `visibility = r > 0`. Depth peeling is enabled so
-  overlapping translucent shells composite correctly. Background black.
+- **Fronts** — by default a camera-facing ring per star (one line PolyData of fixed
+  topology, points rewritten each frame; per-ring RGBA fades with radius via `ring_alpha`),
+  because dozens of filled translucent spheres wash out once they overlap. `m` cycles
+  `SHELL_STYLES = ("rings", "rings + fill", "fill", "off")`; the fills are unit
+  `pyvista.Sphere(radius=1.0)` actors scaled to `r` each frame. Depth peeling is enabled so
+  overlapping translucent fills composite correctly. Background black.
+- **Focus** — `]` / `[` step `focus` through the stars in catalogue order (None → Sol →
+  outward → None); `\` clears it. The focused star's ring is drawn bold and white, the other
+  rings dim by `UNFOCUSED_RING_ALPHA`, and the sphere–sphere intersection circles between
+  its front and every other front (`geometry.intersection_circles`) are drawn in yellow;
+  the clock line shows `focus: <name>`. The log is unaffected.
 - **Text** — `add_text(..., name="clock", position="upper_left", color="white")`
   showing `t = 12.3 yr   2 yr/s   [paused]`; `name="log"` lower-left, newest arrival first,
   holding as many lines as fit in `LOG_HEIGHT_FRACTION` (30 %) of the window; `name="help"`
@@ -185,7 +192,8 @@ The plotter is injected so tests can pass a recording fake; `run()` creates the 
   `on_tick` measures wall `dt` with the injected clock, calls `sim.advance(dt)`, applies
   arrivals (highlight, log line), rescales shells, refreshes the clock
   and log text when they changed, expires stale highlights, and calls `plotter.render()`.
-- **Keys** — `space` toggle, `plus`/`equal` faster, `minus` slower, `r` reset. Camera
+- **Keys** — `space` toggle, `plus`/`equal` faster, `minus` slower, `r` reset, `m` style,
+  `bracketright`/`bracketleft`/`backslash` focus. Camera
   interaction is VTK's default trackball (left-drag orbit, scroll zoom, middle-drag pan;
   `q` closes). The initial camera looks at the origin from about 45 ly away along an
   oblique direction.

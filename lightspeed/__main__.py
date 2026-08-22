@@ -34,6 +34,8 @@ Examples:
 
 Keys in the window:
   space  start / pause          + / -  faster / slower (×2 / ÷2)
+  m      shell style: rings (default) / rings + fill / fill / off
+  ] / [  focus the next / previous star, out from Sol; \\ clears the focus
   r      reset t = 0, refit the camera    q  quit
   drag to orbit, scroll to zoom, middle-drag to pan
 

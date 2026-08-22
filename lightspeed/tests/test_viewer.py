@@ -8,11 +8,18 @@ import pyvista
 from lightspeed import catalog, simulation, viewer
 
 
+class FakeProp:
+    def __init__(self, opacity=1.0, line_width=1.0):
+        self.opacity = opacity
+        self.line_width = line_width
+
+
 class FakeActor:
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.position = (0.0, 0.0, 0.0)
         self.scale = (1.0, 1.0, 1.0)
         self.visibility = True
+        self.prop = FakeProp(opacity=kwargs.get("opacity", 1.0), line_width=kwargs.get("line_width", 1.0))
 
 
 class FakeRenderWindow:
@@ -55,7 +62,7 @@ class FakePlotter:
         self.window_size = (1280, 860)
 
     def add_mesh(self, mesh, **kwargs):
-        actor = FakeActor()
+        actor = FakeActor(**kwargs)
         self.meshes.append((mesh, kwargs))
         self.actors.append(actor)
         return actor
@@ -108,7 +115,18 @@ def make_viewer(speed=1.0):
 
 
 def shell_meshes(plotter):
-    return [(m, kw) for m, kw in plotter.meshes if kw.get("opacity") is not None]
+    return [(m, kw) for m, kw in plotter.meshes if kw.get("smooth_shading")]
+
+
+def ring_mesh(plotter):
+    (mesh, kwargs), actor = next(
+        ((m, kw), a) for (m, kw), a in zip(plotter.meshes, plotter.actors, strict=True) if kw.get("scalars") == "rgba"
+    )
+    return mesh, kwargs, actor
+
+
+def line_actor(plotter, color):
+    return next(a for (m, kw), a in zip(plotter.meshes, plotter.actors, strict=True) if kw.get("color") == color)
 
 
 def test_build_adds_one_translucent_unit_shell_per_star_placed_at_the_star():
@@ -125,7 +143,7 @@ def test_build_adds_one_translucent_unit_shell_per_star_placed_at_the_star():
 
 def test_build_adds_the_star_points_with_sol_in_yellow():
     _, _, plotter, _ = make_viewer()
-    points = [(m, kw) for m, kw in plotter.meshes if kw.get("rgb")]
+    points = [(m, kw) for m, kw in plotter.meshes if kw.get("render_points_as_spheres")]
     assert len(points) == 1
     mesh, kwargs = points[0]
     assert kwargs["scalars"] == "rgb"
@@ -199,7 +217,17 @@ def test_build_sets_up_the_scene_the_overlays_the_keys_and_the_timer():
         assert kwargs.get("color") is not None  # the default theme draws text black on black
     assert "paused" in plotter.texts["clock"][0]
     assert "space" in plotter.texts["help"][0]
-    assert set(plotter.keys) == {"space", "plus", "equal", "minus", "r"}
+    assert set(plotter.keys) == {
+        "space",
+        "plus",
+        "equal",
+        "minus",
+        "r",
+        "m",
+        "bracketright",
+        "bracketleft",
+        "backslash",
+    }
     assert len(plotter.timers) == 1
     max_steps, duration, callback = plotter.timers[0]
     assert max_steps > 10**6
@@ -226,9 +254,11 @@ def test_space_starts_and_ticks_grow_every_shell_to_the_clock():
     clock.now += 0.5  # 0.5 s x 2 yr/s = 1 yr
     view.on_tick(2)
     assert sim.time_yr == pytest.approx(1.0)
+    _, _, rings = ring_mesh(plotter)
+    assert rings.visibility is True
     for actor in view.shells:
-        assert actor.visibility is True
-        assert actor.scale == pytest.approx((1.0, 1.0, 1.0))
+        assert actor.visibility is False  # the default style draws rings, not filled shells
+        assert actor.scale == pytest.approx((1.0, 1.0, 1.0))  # but the fills track the radius regardless
     assert "t =" in plotter.texts["clock"][0]
     assert "1.0" in plotter.texts["clock"][0]
     assert "paused" not in plotter.texts["clock"][0]
@@ -252,7 +282,7 @@ def test_an_arrival_highlights_both_stars_and_logs_one_line():
     view.on_tick(1)
     clock.now += 3.5
     view.on_tick(2)
-    mesh = next(m for m, kw in plotter.meshes if kw.get("rgb"))
+    mesh = next(m for m, kw in plotter.meshes if kw.get("render_points_as_spheres"))
     assert tuple(mesh["rgb"][1]) == viewer.HIGHLIGHT_COLOR  # A was reached by Sol's light
     assert tuple(mesh["rgb"][0]) == viewer.HIGHLIGHT_COLOR  # and Sol by A's
     assert tuple(mesh["rgb"][2]) == viewer.STAR_COLOR
@@ -266,7 +296,7 @@ def test_a_highlight_fades_back_after_highlight_seconds():
     view.on_tick(1)
     clock.now += 3.5
     view.on_tick(2)
-    mesh = next(m for m, kw in plotter.meshes if kw.get("rgb"))
+    mesh = next(m for m, kw in plotter.meshes if kw.get("render_points_as_spheres"))
     clock.now += viewer.HIGHLIGHT_SECONDS / 2
     view.on_tick(3)
     assert tuple(mesh["rgb"][1]) == viewer.HIGHLIGHT_COLOR
@@ -337,7 +367,7 @@ def test_r_resets_the_clock_hides_the_shells_and_clears_the_log_and_highlights()
     clock.now += 3.5
     view.on_tick(2)
     plotter.keys["r"]()
-    mesh = next(m for m, kw in plotter.meshes if kw.get("rgb"))
+    mesh = next(m for m, kw in plotter.meshes if kw.get("render_points_as_spheres"))
     assert sim.time_yr == 0.0
     assert sim.running is False
     assert all(actor.visibility is False for actor in view.shells)
@@ -468,3 +498,128 @@ def test_build_works_against_a_real_off_screen_plotter():
     plotter = pyvista.Plotter(off_screen=True)
     viewer.Viewer(simulation.Simulation([catalog.SOL, star("A", 3.0)]), plotter).build()
     assert len(plotter.renderer.actors) >= 4  # shells + points + labels + text overlays
+
+
+# -- rings, styles and focus --------------------------------------------------
+
+
+def test_build_adds_one_camera_facing_ring_per_star_hidden_until_light_is_emitted():
+    view, sim, plotter, clock = make_viewer()
+    mesh, kwargs, actor = ring_mesh(plotter)
+    assert mesh.n_points == 3 * viewer.RING_SEGMENTS
+    assert kwargs["rgb"] is True and mesh["rgba"].shape == (3 * viewer.RING_SEGMENTS, 4)
+    assert actor.visibility is False
+    view.toggle()
+    view.on_tick(1)
+    clock.now += 2.0
+    view.on_tick(2)
+    assert actor.visibility is True
+    camera = np.asarray(plotter.camera.position)
+    for index, center in enumerate(sim.positions):
+        ring = mesh.points[index * viewer.RING_SEGMENTS : (index + 1) * viewer.RING_SEGMENTS]
+        assert np.linalg.norm(ring - center, axis=1) == pytest.approx(np.full(viewer.RING_SEGMENTS, 2.0), abs=1e-5)
+        towards_camera = camera - center
+        assert np.abs((ring - center) @ towards_camera) == pytest.approx(np.zeros(viewer.RING_SEGMENTS), abs=1e-4)
+
+
+def test_rings_fade_as_the_shells_grow():
+    view, _, plotter, clock = make_viewer()
+    mesh, _, _ = ring_mesh(plotter)
+    view.toggle()
+    view.on_tick(1)
+    clock.now += 1.0
+    view.on_tick(2)
+    young = int(mesh["rgba"][0, 3])
+    clock.now += 8.0
+    view.on_tick(3)
+    old = int(mesh["rgba"][0, 3])
+    assert young == round(255 * viewer.ring_alpha(1.0)) > old == round(255 * viewer.ring_alpha(9.0))
+    assert viewer.ring_alpha(100.0) == viewer.RING_MIN_ALPHA
+
+
+def test_m_cycles_the_shell_style():
+    view, _, plotter, clock = make_viewer()
+    view.toggle()
+    view.on_tick(1)
+    clock.now += 1.0
+    view.on_tick(2)
+    _, _, rings = ring_mesh(plotter)
+    fills = view.shells
+    assert view.style == "rings" and rings.visibility and not any(a.visibility for a in fills)
+    plotter.keys["m"]()
+    assert view.style == "rings + fill" and rings.visibility and all(a.visibility for a in fills)
+    assert fills[0].prop.opacity == viewer.FILL_OPACITY_WITH_RINGS
+    plotter.keys["m"]()
+    assert view.style == "fill" and not rings.visibility and all(a.visibility for a in fills)
+    assert fills[0].prop.opacity == viewer.SHELL_OPACITY
+    plotter.keys["m"]()
+    assert view.style == "off" and not rings.visibility and not any(a.visibility for a in fills)
+    plotter.keys["m"]()
+    assert view.style == "rings"
+
+
+def test_focus_walks_out_from_sol_and_back_to_none():
+    view, _, plotter, _ = make_viewer()
+    assert view.focus is None
+    plotter.keys["bracketright"]()
+    assert view.focus == 0 and "focus: Sol" in plotter.texts["clock"][0]
+    plotter.keys["bracketright"]()
+    assert view.focus == 1 and "focus: A" in plotter.texts["clock"][0]
+    plotter.keys["bracketright"]()
+    plotter.keys["bracketright"]()
+    assert view.focus is None and "focus" not in plotter.texts["clock"][0]
+    plotter.keys["bracketleft"]()
+    assert view.focus == 2  # previous from none wraps to the farthest star
+    plotter.keys["bracketleft"]()
+    assert view.focus == 1
+    plotter.keys["backslash"]()
+    assert view.focus is None
+
+
+def test_focus_draws_a_bold_ring_and_the_crossings_with_every_other_shell():
+    view, _, plotter, clock = make_viewer()  # Sol, A at 3 ly, B at 7 ly
+    mesh, _, _ = ring_mesh(plotter)
+    focus_ring = line_actor(plotter, viewer.FOCUS_RING_COLOR)
+    crossings = line_actor(plotter, viewer.INTERSECTION_COLOR)
+    view.toggle()
+    view.on_tick(1)
+    clock.now += 4.0
+    view.on_tick(2)  # r = 4: Sol's shell overlaps A's (3 apart) and B's (7 apart)
+    assert focus_ring.visibility is False and crossings.visibility is False
+    plotter.keys["bracketright"]()
+    view.on_tick(3)
+    assert focus_ring.visibility is True and crossings.visibility is True
+    assert focus_ring.prop.line_width == viewer.FOCUS_LINE_WIDTH
+    assert int(mesh["rgba"][0, 3]) == 0  # Sol's ordinary ring gives way to the bold one
+    assert int(mesh["rgba"][viewer.RING_SEGMENTS, 3]) == round(
+        255 * viewer.ring_alpha(4.0) * viewer.UNFOCUSED_RING_ALPHA
+    )
+    circles = view._crossings.points.reshape(2, viewer.INTERSECTION_SEGMENTS, 3)
+    # with A: centres 3 apart, both radius 4 → circle of radius sqrt(16 - 2.25) about (1.5, 0, 0), in the plane x = 1.5
+    assert np.linalg.norm(circles[0] - [1.5, 0.0, 0.0], axis=1) == pytest.approx(
+        np.full(viewer.INTERSECTION_SEGMENTS, math.sqrt(16 - 2.25))
+    )
+    assert circles[0][:, 0] == pytest.approx(np.full(viewer.INTERSECTION_SEGMENTS, 1.5))
+    # with B: 7 apart → radius sqrt(16 - 12.25) about (3.5, 0, 0)
+    assert np.linalg.norm(circles[1] - [3.5, 0.0, 0.0], axis=1) == pytest.approx(
+        np.full(viewer.INTERSECTION_SEGMENTS, math.sqrt(16 - 12.25))
+    )
+    plotter.keys["backslash"]()
+    view.on_tick(4)
+    assert focus_ring.visibility is False and crossings.visibility is False
+    assert int(mesh["rgba"][0, 3]) == round(255 * viewer.ring_alpha(4.0))
+
+
+def test_the_off_style_hides_the_focus_visuals_too():
+    view, _, plotter, clock = make_viewer()
+    view.toggle()
+    view.on_tick(1)
+    clock.now += 4.0
+    view.on_tick(2)
+    plotter.keys["bracketright"]()
+    for _ in range(3):
+        plotter.keys["m"]()
+    assert view.style == "off"
+    view.on_tick(3)
+    assert line_actor(plotter, viewer.FOCUS_RING_COLOR).visibility is False
+    assert line_actor(plotter, viewer.INTERSECTION_COLOR).visibility is False

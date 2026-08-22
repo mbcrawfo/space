@@ -1,11 +1,20 @@
-"""The 3D scene: stars as points, labels, one growing translucent shell per star.
+"""The 3D scene: stars as points, labels, and one growing light front per star.
 
 Everything here talks to a *plotter* — normally a `pyvista.Plotter`, in tests a fake that
 records calls — so the scene logic can be exercised without a window. `run()` is the one
 place the real plotter is created and shown.
 
-The mechanics, verified against pyvista 0.48 / VTK 9.6: shells are unit spheres whose
-actors are scaled every frame (far cheaper than rewriting points); star colours live in a
+Each star's front can be drawn as a camera-facing ring (the default — dozens of filled
+translucent spheres wash out once they overlap), as a filled translucent sphere, or both;
+`m` cycles the styles. `]` / `[` focus one star at a time, walking outward from Sol: its
+ring is drawn bold and the circles where its front crosses every other front are drawn,
+which is where the "interaction" actually is.
+
+The mechanics, verified against pyvista 0.48 / VTK 9.6: filled shells are unit spheres whose
+actors are scaled every frame (far cheaper than rewriting points); rings, the focus ring and
+the crossing circles are three PolyDatas of fixed topology whose points are rewritten each
+frame; per-ring brightness is a uint8 RGBA point array (`rgb=True` accepts four channels);
+star colours live in a
 uint8 "rgb" point array that is mutated in place; text overlays are re-added under the
 same name, which replaces the previous actor; and every piece of text carries an explicit
 colour, because pyvista's default theme draws text black.
@@ -28,6 +37,7 @@ import matplotlib
 import numpy as np
 import pyvista as pv
 
+from . import geometry
 from .catalog import Star
 from .simulation import Arrival, Simulation
 
@@ -39,8 +49,20 @@ LOG_HEIGHT_FRACTION = 0.30  # the share of the window's height the arrival log m
 SOL_COLOR = (255, 220, 80)
 STAR_COLOR = (235, 235, 235)
 HIGHLIGHT_COLOR = (255, 80, 60)
-SHELL_OPACITY = 0.07
+SHELL_OPACITY = 0.07  # a filled shell on its own
+FILL_OPACITY_WITH_RINGS = 0.03  # a filled shell behind its ring
 SHELL_PALETTE = ("#4fc3f7", "#ce93d8", "#80cbc4", "#fff176", "#ffab91", "#a5d6a7", "#90caf9", "#f48fb1")
+SHELL_STYLES = ("rings", "rings + fill", "fill", "off")
+RING_SEGMENTS = 96
+RING_LINE_WIDTH = 1.5
+RING_MAX_ALPHA = 0.9
+RING_MIN_ALPHA = 0.25
+UNFOCUSED_RING_ALPHA = 0.35  # how much the other rings dim while one star is focused
+FOCUS_RING_COLOR = "white"
+FOCUS_LINE_WIDTH = 3.5
+INTERSECTION_COLOR = "#ffd54f"
+INTERSECTION_SEGMENTS = 64
+INTERSECTION_OPACITY = 0.8
 TEXT_COLOR = "white"
 # VTK's embedded fonts stop at Latin-1, so the log's "↔" needs a fuller face. matplotlib — a
 # pyvista dependency, so always installed — ships DejaVu Sans; the overlays use it. If it is
@@ -60,6 +82,8 @@ CAMERA_DISTANCE_LY = 55.0
 HELP_TEXT = (
     "space  start / pause\n"
     "+ / -  faster / slower\n"
+    "m      shell style: rings / rings + fill / fill / off\n"
+    "] / [  focus next / previous star, out from Sol    \\  clear focus\n"
     "r      reset t = 0 and refit the camera\n"
     "drag   orbit    scroll  zoom    middle-drag  pan\n"
     "q      quit"
@@ -70,6 +94,11 @@ def format_speed(years_per_second: float) -> str:
     """'1 yr/s', '0.5 yr/s', '0.0156 yr/s' — as many decimals as the value needs, no more."""
     text = f"{years_per_second:.4f}".rstrip("0").rstrip(".")
     return f"{text} yr/s"
+
+
+def ring_alpha(radius: float) -> float:
+    """Rings fade as the fronts grow and crowd: full at 1 ly, a quarter by ~13 ly."""
+    return float(np.clip(RING_MAX_ALPHA / np.sqrt(max(radius, 1.0)), RING_MIN_ALPHA, RING_MAX_ALPHA))
 
 
 def format_arrival(sim: Simulation, arrival: Arrival) -> str:
@@ -92,6 +121,15 @@ class Viewer:
         self.shells: list = []
         self.labels: list = []
         self.log_lines: list[str] = []
+        self.style_index = 0
+        self.focus: int | None = None
+        self._rings: pv.PolyData | None = None
+        self._ring_actor = None
+        self._ring_base_rgba: np.ndarray | None = None
+        self._focus_ring: pv.PolyData | None = None
+        self._focus_actor = None
+        self._crossings: pv.PolyData | None = None
+        self._crossing_actor = None
         self._points: pv.PolyData | None = None
         self._base_colors: np.ndarray | None = None
         self._lit_until: np.ndarray = np.zeros(len(sim.stars))  # wall time each highlight expires; 0 = unlit
@@ -104,6 +142,7 @@ class Viewer:
         self.plotter.set_background("black")
         self.plotter.enable_depth_peeling()
         self._add_shells()
+        self._add_rings()
         self._add_stars()
         self._add_labels()
         self.plotter.add_text(
@@ -123,6 +162,10 @@ class Viewer:
         self.plotter.add_key_event("equal", self.faster)
         self.plotter.add_key_event("minus", self.slower)
         self.plotter.add_key_event("r", self.reset)
+        self.plotter.add_key_event("m", self.cycle_style)
+        self.plotter.add_key_event("bracketright", self.focus_next)
+        self.plotter.add_key_event("bracketleft", self.focus_previous)
+        self.plotter.add_key_event("backslash", self.clear_focus)
         self.plotter.add_timer_event(max_steps=sys.maxsize, duration=FRAME_MS, callback=self.on_tick)
         # On macOS, VTK's timers do not fire while a mouse button is held, but the trackball camera
         # renders on every mouse move; advancing the frame at the start of every render keeps the
@@ -140,6 +183,31 @@ class Viewer:
             actor.position = tuple(float(v) for v in position)
             actor.visibility = False
             self.shells.append(actor)
+
+    def _add_rings(self) -> None:
+        n = len(self.sim.stars)
+        # Every star's ring in one line mesh; per-point RGBA carries each ring's colour and fade.
+        self._rings = pv.PolyData(np.zeros((n * RING_SEGMENTS, 3)), lines=geometry.polyline_cells(n, RING_SEGMENTS))
+        palette = np.array([pv.Color(c).int_rgb for c in SHELL_PALETTE], dtype=np.uint8)
+        rgb = palette[np.arange(n) % len(palette)]
+        self._ring_base_rgba = np.hstack([rgb, np.full((n, 1), 255, dtype=np.uint8)])
+        self._rings["rgba"] = np.repeat(self._ring_base_rgba, RING_SEGMENTS, axis=0)
+        self._ring_actor = self.plotter.add_mesh(self._rings, scalars="rgba", rgb=True, line_width=RING_LINE_WIDTH)
+        self._ring_actor.visibility = False
+        # The focused star's ring, drawn bold on its own; and the circles where its front
+        # crosses every other front — one per other star, radius zero (invisible) until they meet.
+        self._focus_ring = pv.PolyData(np.zeros((RING_SEGMENTS, 3)), lines=geometry.polyline_cells(1, RING_SEGMENTS))
+        self._focus_actor = self.plotter.add_mesh(self._focus_ring, color=FOCUS_RING_COLOR, line_width=FOCUS_LINE_WIDTH)
+        self._focus_actor.visibility = False
+        if n > 1:
+            self._crossings = pv.PolyData(
+                np.zeros(((n - 1) * INTERSECTION_SEGMENTS, 3)),
+                lines=geometry.polyline_cells(n - 1, INTERSECTION_SEGMENTS),
+            )
+            self._crossing_actor = self.plotter.add_mesh(
+                self._crossings, color=INTERSECTION_COLOR, line_width=RING_LINE_WIDTH, opacity=INTERSECTION_OPACITY
+            )
+            self._crossing_actor.visibility = False
 
     def _add_stars(self) -> None:
         colors = np.tile(np.array(STAR_COLOR, dtype=np.uint8), (len(self.sim.stars), 1))
@@ -175,7 +243,8 @@ class Viewer:
 
     def _refresh_clock(self) -> None:
         state = "" if self.sim.running else "   [paused — press space]"
-        text = f"t = {self.sim.time_yr:,.1f} yr   {format_speed(self.sim.years_per_second)}{state}"
+        focus = "" if self.focus is None else f"   focus: {self.sim.stars[self.focus].name}"
+        text = f"t = {self.sim.time_yr:,.1f} yr   {format_speed(self.sim.years_per_second)}{focus}{state}"
         self.plotter.add_text(
             text,
             position="upper_left",
@@ -231,7 +300,35 @@ class Viewer:
         self._lit_until[:] = 0.0
         self._apply_colors()
         self._apply_radius()
+        self._apply_rings()
         self._refresh_log()
+        self._refresh_clock()
+
+    @property
+    def style(self) -> str:
+        return SHELL_STYLES[self.style_index]
+
+    def cycle_style(self) -> None:
+        self.style_index = (self.style_index + 1) % len(SHELL_STYLES)
+        self._apply_radius()
+        self._apply_rings()
+
+    def focus_next(self) -> None:
+        """None → Sol → the next star out … → None again; the catalogue is sorted by distance from Sol."""
+        last = len(self.sim.stars) - 1
+        self.focus = 0 if self.focus is None else (None if self.focus >= last else self.focus + 1)
+        self._apply_rings()
+        self._refresh_clock()
+
+    def focus_previous(self) -> None:
+        last = len(self.sim.stars) - 1
+        self.focus = last if self.focus is None else (None if self.focus == 0 else self.focus - 1)
+        self._apply_rings()
+        self._refresh_clock()
+
+    def clear_focus(self) -> None:
+        self.focus = None
+        self._apply_rings()
         self._refresh_clock()
 
     # -- the frame ------------------------------------------------------------
@@ -270,6 +367,7 @@ class Viewer:
             self._apply_radius()
             self._refresh_clock()
         self._apply_label_sizes()  # the camera may have moved, running or not
+        self._apply_rings()  # likewise: rings face the camera
         # No self.plotter.render() here: pyvista's Timer.execute renders the window right
         # after this callback returns (every FRAME_MS, even while paused), so rendering
         # again here would be a second full render per frame.
@@ -287,9 +385,51 @@ class Viewer:
 
     def _apply_radius(self) -> None:
         radius = self.sim.radius()
+        show_fill = radius > 0.0 and self.style in ("rings + fill", "fill")
+        opacity = FILL_OPACITY_WITH_RINGS if self.style == "rings + fill" else SHELL_OPACITY
         for actor in self.shells:
-            actor.visibility = radius > 0.0
+            actor.visibility = show_fill
             actor.scale = (radius, radius, radius)
+            if actor.prop.opacity != opacity:
+                actor.prop.opacity = opacity
+
+    def _apply_rings(self) -> None:
+        """Re-aim every ring at the camera at the current radius, fade them, and draw the focus visuals."""
+        if self._rings is None or self._ring_base_rgba is None or self._focus_ring is None:
+            raise RuntimeError("Viewer.build() must run before the rings can change.")
+        radius = self.sim.radius()
+        show_rings = radius > 0.0 and self.style in ("rings", "rings + fill")
+        show_focus = self.focus is not None and radius > 0.0 and self.style != "off"
+        self._ring_actor.visibility = show_rings
+        self._focus_actor.visibility = show_focus
+        if self._crossing_actor is not None:
+            self._crossing_actor.visibility = show_focus
+        if not show_rings and not show_focus:
+            return
+        camera = np.asarray(self.plotter.camera.position, dtype=float)
+        normals = geometry.facing_normals(self.sim.positions, camera)
+        radii = np.full(len(self.sim.stars), radius)
+        self._rings.points = geometry.circle_points(self.sim.positions, radii, normals, RING_SEGMENTS)
+        alpha = np.full(len(self.sim.stars), ring_alpha(radius))
+        if self.focus is not None:
+            alpha *= UNFOCUSED_RING_ALPHA
+            alpha[self.focus] = 0.0  # the bold focus ring stands in for it
+        rgba = self._ring_base_rgba.copy()
+        rgba[:, 3] = np.round(255 * alpha).astype(np.uint8)
+        self._rings["rgba"][:] = np.repeat(rgba, RING_SEGMENTS, axis=0)
+        if show_focus:
+            focus = self.focus
+            self._focus_ring.points = geometry.circle_points(
+                self.sim.positions[[focus]], radii[[focus]], normals[[focus]], RING_SEGMENTS
+            )
+            if self._crossings is not None:
+                others = np.delete(self.sim.positions, focus, axis=0)
+                centers, circle_radii, circle_normals = geometry.intersection_circles(
+                    self.sim.positions[focus], others, radius
+                )
+                self._crossings.points = geometry.circle_points(
+                    centers, circle_radii, circle_normals, INTERSECTION_SEGMENTS
+                )
 
 
 def run(stars: Sequence[Star], *, years_per_second: float, autostart: bool) -> None:

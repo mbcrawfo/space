@@ -3,7 +3,7 @@
 Light is slow on the scale of the stars. `lightspeed` opens a 3D window centred on Sol with
 nearly ninety stellar systems out to 20 light-years, each at its true position relative
 to Earth and labelled with its name and distance, and on your command lets every one of
-them flash at once — then shows each flash growing as a translucent sphere at one
+them flash at once — then shows each flash growing as a ring of light at one
 light-year per simulated year while you orbit the camera and watch the shells cross one
 another and wash over other stars.
 
@@ -33,6 +33,8 @@ In the window:
 | --- | --- |
 | `space` | start / pause |
 | `+` / `-` | double / halve the speed |
+| `m` | cycle the shell style: rings (default) → rings + fill → fill → off |
+| `]` / `[` | focus the next / previous star, walking out from Sol; `\` clears the focus |
 | `r` | reset to t = 0 and refit the camera |
 | `q` | quit |
 | drag / scroll / middle-drag | orbit / zoom / pan (VTK's trackball camera) |
@@ -61,8 +63,17 @@ At simulated time `t` the flash from a star at **p** is the sphere of radius `t`
 **p**, because light covers one light-year per year. It reaches a star at **q** when
 `t = |p − q|`, so the arrival schedule is the sorted list of pairwise separations,
 computed once. Each frame the viewer advances the clock by the real time elapsed times
-`--speed`, rescales every shell to the new radius, lights up any star a shell has just
-reached, and appends the arrival to the log. A frame is drawn on a timer and before every
+`--speed`, resizes every front to the new radius, lights up any star a front has just
+reached, and appends the arrival to the log.
+
+Each front is drawn by default as a ring — the silhouette of its sphere, always turned to
+face the camera — because dozens of filled translucent spheres wash each other out within
+a few years of overlapping. Rings fade as they grow and crowd; `m` switches to filled
+shells (or both, or none) if you prefer. Focusing a star with `]` / `[` draws its ring bold
+and, in yellow, the circles where its front is crossing every other front — two equal
+spheres whose centres are `d` apart and whose radius is `r` meet in a circle of radius
+`√(r² − d²/4)` in the plane halfway between them — so the interactions are drawn, not
+left to the eye. A frame is drawn on a timer and before every
 render — including the renders the camera makes while you drag, so the shells keep growing
 as you orbit — and a single frame never advances the clock by more than a quarter of a
 second of real time, so a stall (a hidden window, a mouse held still) pauses the simulation

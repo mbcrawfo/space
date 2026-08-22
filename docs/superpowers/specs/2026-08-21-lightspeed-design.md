@@ -18,7 +18,7 @@ It is pure Python on the desktop — a VTK window driven through PyVista — not
 
 ```
 $ python -m lightspeed --within 5 --speed 2
-(a window opens; press space to start)
+(a window opens; press space, and the log in its lower-left corner fills in:)
 y    0.2  light from Proxima Centauri reaches Alpha Centauri
 y    0.2  light from Alpha Centauri reaches Proxima Centauri
 y    4.2  light from Sol reaches Proxima Centauri
@@ -34,7 +34,7 @@ Decisions made during brainstorming, in one place:
 | 3D stack | PyVista (VTK): orbit camera, 3D labels, translucent meshes, timer and key callbacks are all built in |
 | Light model | One flash per star at t = 0; shells grow at 1 ly/yr of simulated time; sim clock on screen; speed adjustable with keys |
 | Star data | Bundled catalogue in the package; no network at runtime |
-| Arrival | Highlight plus arrival log: the reached star flashes, a line is shown on screen and printed to stdout |
+| Arrival | Highlight plus arrival log: the reached star flashes, a line is shown in the on-screen log |
 | Scope | About 100 systems within 20 ly, one entry per system |
 
 ## Physics
@@ -184,7 +184,7 @@ The plotter is injected so tests can pass a recording fake; `run()` creates the 
   passes an explicit colour.
 - **Timer** — `add_timer_event(max_steps=sys.maxsize, duration=33, callback=self.on_tick)`.
   `on_tick` measures wall `dt` with the injected clock, calls `sim.advance(dt)`, applies
-  arrivals (highlight, log line, `print` to stdout), rescales shells, refreshes the clock
+  arrivals (highlight, log line), rescales shells, refreshes the clock
   and log text when they changed, expires stale highlights, and calls `plotter.render()`.
 - **Keys** — `space` toggle, `plus`/`equal` faster, `minus` slower, `r` reset. Camera
   interaction is VTK's default trackball (left-drag orbit, scroll zoom, middle-drag pan;

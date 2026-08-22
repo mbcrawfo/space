@@ -70,14 +70,12 @@ class Viewer:
         plotter,
         *,
         clock: Callable[[], float] = time.perf_counter,
-        out=None,
         max_frame_seconds: float = MAX_FRAME_SECONDS,
     ):
         self.sim = sim
         self.plotter = plotter
         self.clock = clock
         self.max_frame_seconds = max_frame_seconds
-        self.out = sys.stdout if out is None else out
         self.shells: list = []
         self.log_lines: list[str] = []
         self._points: pv.PolyData | None = None
@@ -220,9 +218,7 @@ class Viewer:
         arrivals = self.sim.advance(dt)
         for arrival in arrivals:
             self._lit_until[arrival.target] = now + HIGHLIGHT_SECONDS
-            line = format_arrival(self.sim, arrival)
-            self._log(line)
-            print(line, file=self.out)
+            self._log(format_arrival(self.sim, arrival))
         if arrivals:
             self._refresh_log()
         if arrivals or (self._lit_until > 0.0).any():

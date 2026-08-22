@@ -9,7 +9,7 @@ another and wash over other stars.
 
 ```
 $ python -m lightspeed --within 5 --speed 2
-(a window opens; press space to start)
+(a window opens; press space, and the log in its lower-left corner fills in:)
 y    0.2  light from Proxima Centauri reaches Alpha Centauri
 y    0.2  light from Alpha Centauri reaches Proxima Centauri
 y    4.2  light from Sol reaches Proxima Centauri
@@ -41,7 +41,7 @@ In the window:
 | drag / scroll / middle-drag | orbit / zoom / pan (VTK's trackball camera) |
 
 The upper-left corner shows the simulated clock and speed, the lower-left the last eight
-arrivals, the lower-right the key legend. Every arrival is also printed to stdout. VTK's
+arrivals, the lower-right the key legend. VTK's
 other default key bindings also remain active — `w` switches to wireframe, `s` back to
 surface, `f` flies the camera to the point under the cursor, and so on.
 

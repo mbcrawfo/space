@@ -1,4 +1,3 @@
-import io
 import math
 import warnings
 
@@ -94,11 +93,10 @@ def make_viewer(speed=1.0):
     sim = simulation.Simulation([catalog.SOL, star("A", 3.0), star("B", 7.0)], years_per_second=speed)
     plotter = FakePlotter()
     clock = FakeClock()
-    out = io.StringIO()
     # Tests jump the fake clock by whole seconds; the per-frame cap is tested on its own below.
-    view = viewer.Viewer(sim, plotter, clock=clock, out=out, max_frame_seconds=math.inf)
+    view = viewer.Viewer(sim, plotter, clock=clock, max_frame_seconds=math.inf)
     view.build()
-    return view, sim, plotter, clock, out
+    return view, sim, plotter, clock
 
 
 def shell_meshes(plotter):
@@ -106,7 +104,7 @@ def shell_meshes(plotter):
 
 
 def test_build_adds_one_translucent_unit_shell_per_star_placed_at_the_star():
-    view, sim, plotter, _, _ = make_viewer()
+    view, sim, plotter, _ = make_viewer()
     shells = shell_meshes(plotter)
     assert len(shells) == 3
     assert len(view.shells) == 3
@@ -118,7 +116,7 @@ def test_build_adds_one_translucent_unit_shell_per_star_placed_at_the_star():
 
 
 def test_build_adds_the_star_points_with_sol_in_yellow():
-    _, _, plotter, _, _ = make_viewer()
+    _, _, plotter, _ = make_viewer()
     points = [(m, kw) for m, kw in plotter.meshes if kw.get("rgb")]
     assert len(points) == 1
     mesh, kwargs = points[0]
@@ -130,7 +128,7 @@ def test_build_adds_the_star_points_with_sol_in_yellow():
 
 
 def test_build_labels_every_star_with_name_and_distance():
-    _, _, plotter, _, _ = make_viewer()
+    _, _, plotter, _ = make_viewer()
     points, labels, kwargs = plotter.labels
     assert labels == ["Sol (0 ly)", "A (3.0 ly)", "B (7.0 ly)"]
     assert points.shape == (3, 3)
@@ -141,7 +139,7 @@ def test_build_labels_every_star_with_name_and_distance():
 
 
 def test_build_sets_up_the_scene_the_overlays_the_keys_and_the_timer():
-    _, _, plotter, _, _ = make_viewer()
+    _, _, plotter, _ = make_viewer()
     assert plotter.background == "black"
     assert plotter.depth_peeling is True
     assert plotter.camera_position is not None
@@ -159,7 +157,7 @@ def test_build_sets_up_the_scene_the_overlays_the_keys_and_the_timer():
 
 
 def test_ticking_while_paused_keeps_shells_hidden_and_does_not_render():
-    view, sim, plotter, clock, _ = make_viewer()
+    view, sim, plotter, clock = make_viewer()
     clock.now += 1.0
     plotter.timers[0][2](1)  # the registered timer callback is view.on_tick
     assert sim.time_yr == 0.0
@@ -170,7 +168,7 @@ def test_ticking_while_paused_keeps_shells_hidden_and_does_not_render():
 
 
 def test_space_starts_and_ticks_grow_every_shell_to_the_clock():
-    view, sim, plotter, clock, _ = make_viewer(speed=2.0)
+    view, sim, plotter, clock = make_viewer(speed=2.0)
     plotter.keys["space"]()
     assert sim.running is True
     view.on_tick(1)  # the first tick only primes the frame clock
@@ -187,7 +185,7 @@ def test_space_starts_and_ticks_grow_every_shell_to_the_clock():
 
 def test_the_first_tick_after_build_does_not_jump_the_clock():
     """build() happens long before the window appears; the first frame must measure from the first tick, not from build()."""
-    view, sim, _, clock, _ = make_viewer()
+    view, sim, _, clock = make_viewer()
     view.toggle()
     clock.now += 1000.0
     view.on_tick(1)
@@ -197,8 +195,8 @@ def test_the_first_tick_after_build_does_not_jump_the_clock():
     assert sim.time_yr == pytest.approx(1.0)
 
 
-def test_an_arrival_highlights_the_target_logs_a_line_and_prints_it():
-    view, _, plotter, clock, out = make_viewer()
+def test_an_arrival_highlights_the_target_and_logs_a_line():
+    view, _, plotter, clock = make_viewer()
     view.toggle()
     view.on_tick(1)
     clock.now += 3.5
@@ -209,11 +207,10 @@ def test_an_arrival_highlights_the_target_logs_a_line_and_prints_it():
     assert tuple(mesh["rgb"][2]) == viewer.STAR_COLOR
     assert view.log_lines == ["y    3.0  light from Sol reaches A", "y    3.0  light from A reaches Sol"]
     assert plotter.texts["log"][0] == "\n".join(view.log_lines)
-    assert out.getvalue().splitlines() == view.log_lines
 
 
 def test_a_highlight_fades_back_after_highlight_seconds():
-    view, _, plotter, clock, _ = make_viewer()
+    view, _, plotter, clock = make_viewer()
     view.toggle()
     view.on_tick(1)
     clock.now += 3.5
@@ -230,7 +227,7 @@ def test_a_highlight_fades_back_after_highlight_seconds():
 
 def test_an_arrival_tick_refreshes_the_log_text_exactly_once():
     """A burst of several arrivals in one tick must add_text('log', ...) only once, not once per arrival."""
-    view, _, plotter, clock, _ = make_viewer()
+    view, _, plotter, clock = make_viewer()
     view.toggle()
     view.on_tick(1)  # primes the frame clock, no arrivals yet
     plotter.text_calls.clear()
@@ -241,7 +238,7 @@ def test_an_arrival_tick_refreshes_the_log_text_exactly_once():
 
 
 def test_the_log_keeps_only_the_last_lines():
-    view, _, plotter, clock, _ = make_viewer()
+    view, _, plotter, clock = make_viewer()
     view.toggle()
     view.on_tick(1)
     clock.now += 10.0
@@ -256,7 +253,7 @@ def test_the_log_keeps_only_the_last_lines():
 
 
 def test_plus_equal_and_minus_change_the_speed_and_the_clock_text():
-    _, sim, plotter, _, _ = make_viewer()
+    _, sim, plotter, _ = make_viewer()
     plotter.keys["plus"]()
     assert sim.years_per_second == 2.0
     assert "2 yr/s" in plotter.texts["clock"][0]
@@ -267,7 +264,7 @@ def test_plus_equal_and_minus_change_the_speed_and_the_clock_text():
 
 
 def test_r_resets_the_clock_hides_the_shells_and_clears_the_log_and_highlights():
-    view, sim, plotter, clock, _ = make_viewer()
+    view, sim, plotter, clock = make_viewer()
     view.toggle()
     view.on_tick(1)
     clock.now += 3.5
@@ -325,7 +322,7 @@ def test_run_builds_a_real_plotter_and_shows_it(monkeypatch):
 def test_a_tick_after_the_plotter_closes_does_nothing():
     """VTK delivers one more timer event after `q` has torn the window down; the viewer must not
     touch a plotter that has no render window any more, or pyvista raises from inside the callback."""
-    view, sim, plotter, clock, _ = make_viewer()
+    view, sim, plotter, clock = make_viewer()
     view.toggle()
     view.on_tick(1)
     calls_before = dict(plotter.text_calls)
@@ -340,7 +337,7 @@ def test_a_tick_after_the_plotter_closes_does_nothing():
 def test_build_advances_the_frame_before_every_render_too():
     """On macOS VTK's timers do not fire while the mouse button is held, but the trackball renders on
     every mouse move; hooking the render window's StartEvent keeps the shells growing mid-drag."""
-    view, sim, plotter, clock, _ = make_viewer()
+    view, sim, plotter, clock = make_viewer()
     events = [name for name, _ in plotter.render_window.observers]
     assert events == ["StartEvent"]
     view.toggle()
@@ -372,7 +369,7 @@ def test_a_long_gap_between_frames_pauses_the_clock_instead_of_jumping_it():
 def test_stop_makes_every_later_tick_a_no_op():
     """`run()` wires stop() to pyvista's before_close_callback, which fires before close() tears the
     renderer down — earlier than the render window disappears, which is too late on macOS."""
-    view, sim, plotter, clock, _ = make_viewer()
+    view, sim, plotter, clock = make_viewer()
     view.toggle()
     view.on_tick(1)
     calls_before = dict(plotter.text_calls)
